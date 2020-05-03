@@ -33,7 +33,7 @@
  *
  */
 
-#include <rplidar_node.hpp>
+#include <RPLidarNode.hpp>
 
 namespace rplidar_ros {
 
@@ -57,9 +57,9 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
 
    /* initialize SDK */
    if (m_channel_type == "tcp") {
-      m_driver = RPlidarDriverPtr(RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP));
+      m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP));
    } else {
-      m_driver = RPlidarDriverPtr(RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT));
+      m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT));
    }
 
    if (m_driver == nullptr) {
@@ -255,7 +255,7 @@ bool RPLidarNode::set_scan_mode()
    const auto& logger = this->get_logger();
 
    u_result options_results{};
-   RplidarScanMode current_scan_mode{};
+   RPLidarScanMode current_scan_mode{};
    constexpr auto force_scan{false};
    constexpr auto typical_scan_mode{true};
    constexpr auto scan_options{0}; // don't change this
@@ -263,7 +263,7 @@ bool RPLidarNode::set_scan_mode()
    if (m_scan_mode.empty()) {
       options_results = m_driver->startScan(force_scan, typical_scan_mode, scan_options, &current_scan_mode);
    } else {
-      std::vector<RplidarScanMode> supported_scan_modes;
+      std::vector<RPLidarScanMode> supported_scan_modes;
       options_results = m_driver->getAllSupportedScanModes(supported_scan_modes);
 
       if (IS_OK(options_results)) {

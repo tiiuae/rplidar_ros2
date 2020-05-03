@@ -55,8 +55,8 @@ using LaserScan = sensor_msgs::msg::LaserScan;
 using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
 using StartMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
 using StopMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
-using RPlidarDriver = rp::standalone::rplidar::RPlidarDriver;
-using RplidarScanMode = rp::standalone::rplidar::RplidarScanMode;
+using RPLidarDriver = rp::standalone::rplidar::RPlidarDriver;
+using RPLidarScanMode = rp::standalone::rplidar::RplidarScanMode;
 using Clock = rclcpp::Clock::SharedPtr;
 using ResponseNodeArray = std::array<rplidar_response_measurement_node_hq_t, MAX_SAMPLE_COUNT>;
 using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
@@ -89,15 +89,15 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    void start_motor(const EmptyRequest req, EmptyResponse res);
 
  private:
-   struct RPlidarDriverDeleter
+   struct RPLidarDriverDeleter
    {
-      void operator()(RPlidarDriver* driver)
+      void operator()(RPLidarDriver* driver)
       {
-         RPlidarDriver::DisposeDriver(driver);
+         RPLidarDriver::DisposeDriver(driver);
       }
    };
 
-   using RPlidarDriverPtr = std::unique_ptr<RPlidarDriver, RPlidarDriverDeleter>;
+   using RPLidarDriverUPtr = std::unique_ptr<RPLidarDriver, RPLidarDriverDeleter>;
 
    [[nodiscard]] bool print_device_info() const;
    [[nodiscard]] bool is_healthy() const;
@@ -125,7 +125,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    StartMotorService m_start_motor_service;
 
    /* SDK Pointer */
-   RPlidarDriverPtr m_driver{nullptr};
+   RPLidarDriverUPtr m_driver{nullptr};
 
    /* Timer */
    Timer m_timer;

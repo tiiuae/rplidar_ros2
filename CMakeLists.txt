@@ -56,28 +56,28 @@ ament_auto_find_build_dependencies(REQUIRED
         std_srvs
         rclcpp_components)
 
-add_library(rplidar_composition_node SHARED src/rplidar_node.cpp)
-target_link_libraries(rplidar_composition_node rclcpp sensor_msgs std_srvs rclcpp_components rplidar_sdk)
-ament_target_dependencies(rplidar_composition_node rclcpp sensor_msgs std_srvs rclcpp_components)
-target_include_directories(rplidar_composition_node PUBLIC include)
+add_library(rplidar_node SHARED src/RPLidarNode.cpp)
+target_link_libraries(rplidar_node rclcpp sensor_msgs std_srvs rclcpp_components rplidar_sdk)
+ament_target_dependencies(rplidar_node rclcpp sensor_msgs std_srvs rclcpp_components)
+target_include_directories(rplidar_node PUBLIC include)
 
 # build direct ROS 1 port
-ament_auto_add_executable(rplidarNodeClient src/client.cpp)
-target_link_libraries(rplidarNodeClient rclcpp sensor_msgs std_srvs rclcpp_components)
-ament_target_dependencies(rplidarNodeClient rclcpp sensor_msgs std_srvs rclcpp_components)
+ament_auto_add_executable(rplidar_client src/client.cpp)
+target_link_libraries(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components)
+ament_target_dependencies(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components)
 
 # build composition node
-ament_auto_add_executable(rplidar_composition src/standalone_rplidar.cpp)
-target_link_libraries(rplidar_composition rplidar_composition_node)
+ament_auto_add_executable(rplidar src/rplidar.cpp)
+target_link_libraries(rplidar rplidar_node)
 
-install(TARGETS rplidarNodeClient rplidar_composition rplidar_sdk
+install(TARGETS rplidar_client rplidar rplidar_sdk
         DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch rviz
         DESTINATION share/${PROJECT_NAME})
 
 # Install the shared library composition node
-install(TARGETS rplidar_composition_node
+install(TARGETS rplidar_node
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin)

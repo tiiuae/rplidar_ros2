@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <RPLidarNode.hpp>
 #include <memory>
-#include <rplidar_node.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
