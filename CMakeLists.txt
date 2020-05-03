@@ -73,7 +73,7 @@ target_link_libraries(rplidar rplidar_node)
 install(TARGETS rplidar_client rplidar rplidar_sdk
         DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch rviz
+install(DIRECTORY launch rviz config
         DESTINATION share/${PROJECT_NAME})
 
 # Install the shared library composition node

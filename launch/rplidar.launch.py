@@ -1,4 +1,6 @@
+from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
+from os import path
 
 from launch import LaunchDescription
 
@@ -10,13 +12,9 @@ def generate_launch_description():
             package='rplidar_ros',
             node_executable='rplidar',
             output='screen',
-            parameters=[{
-                'serial_port': '/dev/ttyUSB0',
-                'serial_baudrate': 115200,  # A1 / A2
-                # 'serial_baudrate': 256000, # A3
-                'frame_id': 'laser',
-                'inverted': False,
-                'angle_compensate': True,
-            }],
+            parameters=[
+                path.join(get_package_share_directory('rplidar_ros'), 'config',
+                          'rplidar.yaml')
+            ],
         ),
     ])
