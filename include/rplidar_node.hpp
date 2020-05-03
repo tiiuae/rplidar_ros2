@@ -30,12 +30,18 @@
 #ifndef RPLIDAR_NODE_HPP_
 #define RPLIDAR_NODE_HPP_
 
+// Turn off warnings from sdk library.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <rplidar.h>
+#pragma GCC diagnostic pop
+
 #include <chrono>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
 #include <rclcpp/time_source.hpp>
-#include <rplidar.h>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <visibility.h>
@@ -56,28 +62,17 @@ using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
 using EmptyResponse = std::shared_ptr<std_srvs::srv::Empty::Response>;
 using Timer = rclcpp::TimerBase::SharedPtr;
 using namespace std::chrono_literals;
-
-struct RPlidarDriverDeleter
-{
-   void operator()(RPlidarDriver* driver)
-   {
-      RPlidarDriver::DisposeDriver(driver);
-   }
-};
-
-using RPlidarDriverPtr = std::unique_ptr<RPlidarDriver, RPlidarDriverDeleter>;
-
 } // namespace
 
 namespace rplidar_ros {
-constexpr double degreesToRadians(float x)
-{
-   return x * M_PI / 180.0;
-}
-
-static float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
+constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
 {
    return node.angle_z_q14 * 90.f / 16384.f; // I have no clue what these values mean
+}
+
+constexpr float degreesToRadians(float degrees)
+{
+   return degrees * M_PI / 180.0;
 }
 
 class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
@@ -93,6 +88,16 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    void start_motor(const EmptyRequest req, EmptyResponse res);
 
  private:
+   struct RPlidarDriverDeleter
+   {
+      void operator()(RPlidarDriver* driver)
+      {
+         RPlidarDriver::DisposeDriver(driver);
+      }
+   };
+
+   using RPlidarDriverPtr = std::unique_ptr<RPlidarDriver, RPlidarDriverDeleter>;
+
    bool print_device_info() const;
    bool is_healthy() const;
    bool set_scan_mode();
