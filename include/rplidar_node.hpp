@@ -65,12 +65,12 @@ using namespace std::chrono_literals;
 } // namespace
 
 namespace rplidar_ros {
-constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
+[[nodiscard]] constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
 {
    return node.angle_z_q14 * 90.f / 16384.f; // I have no clue what these values mean
 }
 
-constexpr float degreesToRadians(float degrees)
+[[nodiscard]] constexpr float degreesToRadians(float degrees)
 {
    return degrees * M_PI / 180.0;
 }
@@ -98,9 +98,9 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
 
    using RPlidarDriverPtr = std::unique_ptr<RPlidarDriver, RPlidarDriverDeleter>;
 
-   bool print_device_info() const;
-   bool is_healthy() const;
-   bool set_scan_mode();
+   [[nodiscard]] bool print_device_info() const;
+   [[nodiscard]] bool is_healthy() const;
+   [[nodiscard]] bool set_scan_mode();
    void publish_loop();
 
    /* parameters */

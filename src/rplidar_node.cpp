@@ -183,23 +183,30 @@ bool RPLidarNode::print_device_info() const
    op_result = m_driver->getDeviceInfo(devinfo);
    if (IS_FAIL(op_result)) {
       if (op_result == RESULT_OPERATION_TIMEOUT) {
-         RCLCPP_ERROR(logger, "Error, operation time out. RESULT_OPERATION_TIMEOUT!");
+         RCLCPP_ERROR(logger, "Operation time out!");
       } else {
-         RCLCPP_ERROR(logger, "Error, unexpected error, code: '%x'", op_result);
+         RCLCPP_ERROR(logger, "Error code: '%x'", op_result);
       }
       return false;
    }
 
+   constexpr size_t SERIAL_NUMBER_SIZE{16};
    // print out the device serial number, firmware and hardware version number..
-   std::string serial_no{"RPLIDAR S/N: "};
-   for (int pos = 0; pos < 16; ++pos) {
-      char buff[3];
-      snprintf(buff, sizeof(buff), "%02X", devinfo.serialnum[pos]);
-      serial_no += buff;
+   std::stringstream serial_no{};
+   serial_no << std::hex << std::uppercase;
+   for (size_t index = 0; index < SERIAL_NUMBER_SIZE; ++index) {
+      serial_no << static_cast<uint16_t>(devinfo.serialnum[index]);
    }
-   RCLCPP_INFO(logger, "%s", serial_no.c_str());
-   RCLCPP_INFO(logger, "Firmware Ver: %d.%02d", devinfo.firmware_version >> 8, devinfo.firmware_version & 0xFF);
-   RCLCPP_INFO(logger, "Hardware Rev: %d", static_cast<int>(devinfo.hardware_version));
+
+   struct firmware_version
+   {
+      uint8_t minor : 8;
+      uint8_t major : 8;
+   } version{*reinterpret_cast<firmware_version*>(&devinfo.firmware_version)};
+
+   RCLCPP_INFO(logger, "RPLIDAR S/N: %s", serial_no.str().c_str());
+   RCLCPP_INFO(logger, "Firmware Ver: %d.%02d", version.major, version.minor);
+   RCLCPP_INFO(logger, "Hardware Rev: %d", static_cast<uint16_t>(devinfo.hardware_version));
    return true;
 }
 
