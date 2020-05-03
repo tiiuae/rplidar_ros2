@@ -56,6 +56,17 @@ using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
 using EmptyResponse = std::shared_ptr<std_srvs::srv::Empty::Response>;
 using Timer = rclcpp::TimerBase::SharedPtr;
 using namespace std::chrono_literals;
+
+struct RPlidarDriverDeleter
+{
+   void operator()(RPlidarDriver* driver)
+   {
+      RPlidarDriver::DisposeDriver(driver);
+   }
+};
+
+using RPlidarDriverPtr = std::unique_ptr<RPlidarDriver, RPlidarDriverDeleter>;
+
 } // namespace
 
 namespace rplidar_ros {
@@ -108,7 +119,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    StartMotorService m_start_motor_service;
 
    /* SDK Pointer */
-   RPlidarDriver* m_driver{nullptr};
+   RPlidarDriverPtr m_driver{nullptr};
 
    /* Timer */
    Timer m_timer;

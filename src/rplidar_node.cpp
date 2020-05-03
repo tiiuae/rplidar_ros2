@@ -57,9 +57,9 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
 
    /* initialize SDK */
    if (m_channel_type == "tcp") {
-      m_driver = RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP);
+      m_driver = RPlidarDriverPtr(RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP));
    } else {
-      m_driver = RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT);
+      m_driver = RPlidarDriverPtr(RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT));
    }
 
    if (m_driver == nullptr) {
@@ -73,7 +73,6 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
       if (IS_FAIL(m_driver->connect(m_tcp_ip.c_str(), static_cast<uint32_t>(m_tcp_port)))) {
          std::stringstream error_string;
          error_string << "Cannot bind to the specified TCP host: " << m_tcp_ip << ":" << m_tcp_port;
-         RPlidarDriver::DisposeDriver(m_driver);
          throw std::runtime_error(error_string.str());
       }
 
@@ -82,19 +81,16 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
       if (IS_FAIL(m_driver->connect(m_serial_port.c_str(), (_u32)m_serial_baudrate))) {
          std::stringstream error_string;
          error_string << "Cannot bind to the specified serial port '" << m_serial_port << "'";
-         RPlidarDriver::DisposeDriver(m_driver);
          throw std::runtime_error(error_string.str());
          return;
       }
    }
 
    if (!print_device_info()) {
-      RPlidarDriver::DisposeDriver(m_driver);
       throw std::runtime_error("Failed to get device info.");
    }
 
    if (!is_healthy()) {
-      RPlidarDriver::DisposeDriver(m_driver);
       throw std::runtime_error("Failed the health check.");
    }
 
@@ -103,7 +99,6 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    if (!set_scan_mode()) {
       m_driver->stop();
       m_driver->stopMotor();
-      RPlidarDriver::DisposeDriver(m_driver);
       throw std::runtime_error("Failed to set the scan mode.");
    }
 
@@ -122,7 +117,6 @@ RPLidarNode::~RPLidarNode()
 {
    m_driver->stop();
    m_driver->stopMotor();
-   RPlidarDriver::DisposeDriver(m_driver);
 }
 
 void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
