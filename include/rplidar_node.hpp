@@ -66,7 +66,7 @@ constexpr double degreesToRadians(float x)
 
 static float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
 {
-   return node.angle_z_q14 * 90.f / 16384.f;
+   return node.angle_z_q14 * 90.f / 16384.f; // I have no clue what these values mean
 }
 
 class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
@@ -91,7 +91,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    std::string m_channel_type;
    std::string m_tcp_ip;
    std::string m_serial_port;
-   std::string m_topic_name;
+   std::string m_scan_topic;
    int m_tcp_port;
    int m_serial_baudrate;
    std::string m_frame_id;

@@ -51,7 +51,7 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    m_inverted = this->declare_parameter("inverted", false);
    m_angle_compensate = this->declare_parameter("angle_compensate", false);
    m_scan_mode = this->declare_parameter("scan_mode", std::string());
-   m_topic_name = this->declare_parameter("topic_name", std::string("scan"));
+   m_scan_topic = this->declare_parameter("topic_name", std::string("scan"));
 
    RCLCPP_INFO(logger, "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
 
@@ -65,65 +65,56 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    if (m_driver == nullptr) {
       /* don't start spinning without a driver object */
       RCLCPP_ERROR(logger, "Failed to construct driver");
-      return;
+      throw std::bad_alloc();
    }
 
    if (m_channel_type == "tcp") {
       // make connection...
-      if (IS_FAIL(m_driver->connect(m_tcp_ip.c_str(), (_u32)m_tcp_port))) {
-         RCLCPP_ERROR(logger,
-                      "Error, cannot bind to the specified TCP host '%s:%ud'",
-                      m_tcp_ip.c_str(),
-                      static_cast<unsigned int>(m_tcp_port));
+      if (IS_FAIL(m_driver->connect(m_tcp_ip.c_str(), static_cast<uint32_t>(m_tcp_port)))) {
+         std::stringstream error_string;
+         error_string << "Cannot bind to the specified TCP host: " << m_tcp_ip << ":" << m_tcp_port;
          RPlidarDriver::DisposeDriver(m_driver);
-         return;
+         throw std::runtime_error(error_string.str());
       }
+
    } else {
       // make connection...
       if (IS_FAIL(m_driver->connect(m_serial_port.c_str(), (_u32)m_serial_baudrate))) {
-         RCLCPP_ERROR(logger, "Error, cannot bind to the specified serial port '%s'.", m_serial_port.c_str());
+         std::stringstream error_string;
+         error_string << "Cannot bind to the specified serial port '" << m_serial_port << "'";
          RPlidarDriver::DisposeDriver(m_driver);
+         throw std::runtime_error(error_string.str());
          return;
       }
    }
 
-   // get rplidar device info
    if (!print_device_info()) {
-      /* don't continue */
       RPlidarDriver::DisposeDriver(m_driver);
-      return;
+      throw std::runtime_error("Failed to get device info.");
    }
 
-   // check health...
    if (!is_healthy()) {
       RPlidarDriver::DisposeDriver(m_driver);
-      return;
+      throw std::runtime_error("Failed the health check.");
    }
 
-   /* start motor */
    m_driver->startMotor();
 
    if (!set_scan_mode()) {
-      /* set the scan mode */
       m_driver->stop();
       m_driver->stopMotor();
       RPlidarDriver::DisposeDriver(m_driver);
-      exit(1);
+      throw std::runtime_error("Failed to set the scan mode.");
    }
 
-   /* done setting up RPLIDAR stuff, now set up ROS 2 stuff */
+   m_publisher = this->create_publisher<LaserScan>(m_scan_topic, rclcpp::SystemDefaultsQoS());
 
-   /* create the publisher for "/scan" */
-   m_publisher = this->create_publisher<LaserScan>(m_topic_name, 10);
-
-   /* create stop motor service */
    m_stop_motor_service = this->create_service<std_srvs::srv::Empty>(
       "stop_motor", std::bind(&RPLidarNode::stop_motor, this, std::placeholders::_1, std::placeholders::_2));
 
-   /* create start motor service */
    m_start_motor_service = this->create_service<std_srvs::srv::Empty>(
       "start_motor", std::bind(&RPLidarNode::start_motor, this, std::placeholders::_1, std::placeholders::_2));
-   /* start timer */
+
    m_timer = this->create_wall_timer(1ms, std::bind(&RPLidarNode::publish_loop, this));
 }
 
