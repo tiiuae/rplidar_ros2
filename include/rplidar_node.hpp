@@ -40,10 +40,10 @@
 #include <std_srvs/srv/empty.hpp>
 #include <visibility.h>
 
-constexpr auto M_PI{3.1415926535897932384626433832795};
-constexpr size_t MAX_SAMPLE_COUNT = 360 * 8;
-
 namespace {
+constexpr auto M_PI{3.1415926535897932384626433832795};
+constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
+
 using LaserScan = sensor_msgs::msg::LaserScan;
 using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
 using StartMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
@@ -59,8 +59,7 @@ using namespace std::chrono_literals;
 } // namespace
 
 namespace rplidar_ros {
-
-constexpr double degreesToRadians(double x)
+constexpr double degreesToRadians(float x)
 {
    return x * M_PI / 180.0;
 }
@@ -70,23 +69,21 @@ static float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& nod
    return node.angle_z_q14 * 90.f / 16384.f;
 }
 
-class RPLIDAR_ROS_PUBLIC rplidar_node : public rclcpp::Node
+class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
 {
  public:
-   explicit rplidar_node(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
-
-   virtual ~rplidar_node();
+   explicit RPLidarNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+   virtual ~RPLidarNode();
 
    void publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count);
 
    /* service callbacks */
    void stop_motor(const EmptyRequest req, EmptyResponse res);
-
    void start_motor(const EmptyRequest req, EmptyResponse res);
 
  private:
-   bool getRPLIDARDeviceInfo() const;
-   bool checkRPLIDARHealth() const;
+   bool print_device_info() const;
+   bool is_healthy() const;
    bool set_scan_mode();
    void publish_loop();
 
@@ -102,15 +99,20 @@ class RPLIDAR_ROS_PUBLIC rplidar_node : public rclcpp::Node
    bool m_angle_compensate;
    float m_angle_compensate_multiple;
    std::string m_scan_mode;
+
    /* Publisher */
    LaserScanPub m_publisher;
+
    /* Services */
    StopMotorService m_stop_motor_service;
    StartMotorService m_start_motor_service;
+
    /* SDK Pointer */
    RPlidarDriver* m_driver{nullptr};
+
    /* Timer */
    Timer m_timer;
+
    /* Scan Times */
    size_t m_scan_count{0};
    float m_min_distance{0.15f};

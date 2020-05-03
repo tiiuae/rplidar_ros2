@@ -37,8 +37,10 @@
 
 namespace rplidar_ros {
 
-rplidar_node::rplidar_node(const rclcpp::NodeOptions& options) : rclcpp::Node("rplidar_node", options)
+RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rplidar_node", options)
 {
+   const auto& logger = this->get_logger();
+
    /* set parameters */
    m_channel_type = this->declare_parameter("channel_type", "serial");
    m_tcp_ip = this->declare_parameter("tcp_ip", "192.168.0.7");
@@ -51,23 +53,25 @@ rplidar_node::rplidar_node(const rclcpp::NodeOptions& options) : rclcpp::Node("r
    m_scan_mode = this->declare_parameter("scan_mode", std::string());
    m_topic_name = this->declare_parameter("topic_name", std::string("scan"));
 
-   RCLCPP_INFO(
-      this->get_logger(), "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
+   RCLCPP_INFO(logger, "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
 
    /* initialize SDK */
-   m_driver = (m_channel_type == "tcp") ? RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP)
-                                        : RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT);
+   if (m_channel_type == "tcp") {
+      m_driver = RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP);
+   } else {
+      m_driver = RPlidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT);
+   }
 
-   if (nullptr == m_driver) {
+   if (m_driver == nullptr) {
       /* don't start spinning without a driver object */
-      RCLCPP_ERROR(this->get_logger(), "Failed to construct driver");
+      RCLCPP_ERROR(logger, "Failed to construct driver");
       return;
    }
 
    if (m_channel_type == "tcp") {
       // make connection...
       if (IS_FAIL(m_driver->connect(m_tcp_ip.c_str(), (_u32)m_tcp_port))) {
-         RCLCPP_ERROR(this->get_logger(),
+         RCLCPP_ERROR(logger,
                       "Error, cannot bind to the specified TCP host '%s:%ud'",
                       m_tcp_ip.c_str(),
                       static_cast<unsigned int>(m_tcp_port));
@@ -77,22 +81,21 @@ rplidar_node::rplidar_node(const rclcpp::NodeOptions& options) : rclcpp::Node("r
    } else {
       // make connection...
       if (IS_FAIL(m_driver->connect(m_serial_port.c_str(), (_u32)m_serial_baudrate))) {
-         RCLCPP_ERROR(
-            this->get_logger(), "Error, cannot bind to the specified serial port '%s'.", m_serial_port.c_str());
+         RCLCPP_ERROR(logger, "Error, cannot bind to the specified serial port '%s'.", m_serial_port.c_str());
          RPlidarDriver::DisposeDriver(m_driver);
          return;
       }
    }
 
    // get rplidar device info
-   if (!getRPLIDARDeviceInfo()) {
+   if (!print_device_info()) {
       /* don't continue */
       RPlidarDriver::DisposeDriver(m_driver);
       return;
    }
 
    // check health...
-   if (!checkRPLIDARHealth()) {
+   if (!is_healthy()) {
       RPlidarDriver::DisposeDriver(m_driver);
       return;
    }
@@ -115,23 +118,23 @@ rplidar_node::rplidar_node(const rclcpp::NodeOptions& options) : rclcpp::Node("r
 
    /* create stop motor service */
    m_stop_motor_service = this->create_service<std_srvs::srv::Empty>(
-      "stop_motor", std::bind(&rplidar_node::stop_motor, this, std::placeholders::_1, std::placeholders::_2));
+      "stop_motor", std::bind(&RPLidarNode::stop_motor, this, std::placeholders::_1, std::placeholders::_2));
 
    /* create start motor service */
    m_start_motor_service = this->create_service<std_srvs::srv::Empty>(
-      "start_motor", std::bind(&rplidar_node::start_motor, this, std::placeholders::_1, std::placeholders::_2));
+      "start_motor", std::bind(&RPLidarNode::start_motor, this, std::placeholders::_1, std::placeholders::_2));
    /* start timer */
-   m_timer = this->create_wall_timer(1ms, std::bind(&rplidar_node::publish_loop, this));
+   m_timer = this->create_wall_timer(1ms, std::bind(&RPLidarNode::publish_loop, this));
 }
 
-rplidar_node::~rplidar_node()
+RPLidarNode::~RPLidarNode()
 {
    m_driver->stop();
    m_driver->stopMotor();
    RPlidarDriver::DisposeDriver(m_driver);
 }
 
-void rplidar_node::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
+void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
 {
    static size_t scan_count = 0;
    sensor_msgs::msg::LaserScan scan_msg;
@@ -185,17 +188,19 @@ void rplidar_node::publish_scan(const double scan_time, const ResponseNodeArray&
    m_publisher->publish(scan_msg);
 }
 
-bool rplidar_node::getRPLIDARDeviceInfo() const
+bool RPLidarNode::print_device_info() const
 {
+   const auto& logger = this->get_logger();
+
    u_result op_result;
    rplidar_response_device_info_t devinfo;
 
    op_result = m_driver->getDeviceInfo(devinfo);
    if (IS_FAIL(op_result)) {
       if (op_result == RESULT_OPERATION_TIMEOUT) {
-         RCLCPP_ERROR(this->get_logger(), "Error, operation time out. RESULT_OPERATION_TIMEOUT!");
+         RCLCPP_ERROR(logger, "Error, operation time out. RESULT_OPERATION_TIMEOUT!");
       } else {
-         RCLCPP_ERROR(this->get_logger(), "Error, unexpected error, code: '%x'", op_result);
+         RCLCPP_ERROR(logger, "Error, unexpected error, code: '%x'", op_result);
       }
       return false;
    }
@@ -207,14 +212,13 @@ bool rplidar_node::getRPLIDARDeviceInfo() const
       snprintf(buff, sizeof(buff), "%02X", devinfo.serialnum[pos]);
       serial_no += buff;
    }
-   RCLCPP_INFO(this->get_logger(), "%s", serial_no.c_str());
-   RCLCPP_INFO(
-      this->get_logger(), "Firmware Ver: %d.%02d", devinfo.firmware_version >> 8, devinfo.firmware_version & 0xFF);
-   RCLCPP_INFO(this->get_logger(), "Hardware Rev: %d", static_cast<int>(devinfo.hardware_version));
+   RCLCPP_INFO(logger, "%s", serial_no.c_str());
+   RCLCPP_INFO(logger, "Firmware Ver: %d.%02d", devinfo.firmware_version >> 8, devinfo.firmware_version & 0xFF);
+   RCLCPP_INFO(logger, "Hardware Rev: %d", static_cast<int>(devinfo.hardware_version));
    return true;
 }
 
-bool rplidar_node::checkRPLIDARHealth() const
+bool RPLidarNode::is_healthy() const
 {
    rplidar_response_device_health_t healthinfo;
    u_result op_result = m_driver->getHealth(healthinfo);
@@ -231,7 +235,7 @@ bool rplidar_node::checkRPLIDARHealth() const
    return false;
 }
 
-void rplidar_node::stop_motor(const EmptyRequest, EmptyResponse)
+void RPLidarNode::stop_motor(const EmptyRequest, EmptyResponse)
 {
    if (nullptr == m_driver) {
       return;
@@ -242,7 +246,7 @@ void rplidar_node::stop_motor(const EmptyRequest, EmptyResponse)
    m_driver->stopMotor();
 }
 
-void rplidar_node::start_motor(const EmptyRequest, EmptyResponse)
+void RPLidarNode::start_motor(const EmptyRequest, EmptyResponse)
 {
    if (nullptr == m_driver) {
       return;
@@ -253,7 +257,7 @@ void rplidar_node::start_motor(const EmptyRequest, EmptyResponse)
    m_driver->startScan(0, 1);
 }
 
-bool rplidar_node::set_scan_mode()
+bool RPLidarNode::set_scan_mode()
 {
    const auto& logger = this->get_logger();
 
@@ -310,8 +314,8 @@ bool rplidar_node::set_scan_mode()
    const float samples_per_rotation = samples_per_second / DEFAULT_FREQUENCY; // Each rotation is 1000 ms
    const float samples_per_degree = samples_per_rotation / 360.0;
 
-   m_angle_compensate_multiple = samples_per_degree;
-   m_angle_compensate_multiple = std::max(m_angle_compensate_multiple, 1.0f);
+   m_angle_compensate_multiple = samples_per_degree; // minimum viable theoretical samples per degrees rotated
+   m_angle_compensate_multiple = std::max(m_angle_compensate_multiple, 1.0f); // minimum of 1 sample per degree
    m_max_distance = current_scan_mode.max_distance;
 
    RCLCPP_INFO(logger,
@@ -323,7 +327,7 @@ bool rplidar_node::set_scan_mode()
    return true;
 }
 
-void rplidar_node::publish_loop()
+void RPLidarNode::publish_loop()
 {
    const auto& logger = this->get_logger();
    ResponseNodeArray sample_nodes{};
@@ -396,4 +400,4 @@ void rplidar_node::publish_loop()
 
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(rplidar_ros::rplidar_node)
+RCLCPP_COMPONENTS_REGISTER_NODE(rplidar_ros::RPLidarNode)
