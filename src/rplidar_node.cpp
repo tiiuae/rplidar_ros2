@@ -215,21 +215,22 @@ bool RPLidarNode::is_healthy() const
    rplidar_response_device_health_t healthinfo;
    u_result op_result = m_driver->getHealth(healthinfo);
 
+   const auto& logger = this->get_logger();
    if (IS_OK(op_result)) {
-      RCLCPP_INFO(this->get_logger(), "RPLidar health status : '%d'", healthinfo.status);
+      RCLCPP_INFO(logger, "RPLidar health status : '%d'", healthinfo.status);
       if (healthinfo.status == RPLIDAR_STATUS_ERROR) {
-         RCLCPP_ERROR(this->get_logger(), "Error, rplidar internal error detected. Please reboot the device to retry");
+         RCLCPP_ERROR(logger, "RPLidar internal error detected. Please reboot the device to retry");
          return false;
       }
       return true;
    }
-   RCLCPP_ERROR(this->get_logger(), "Error, cannot retrieve rplidar health code: '%x'", op_result);
+   RCLCPP_ERROR(logger, "Cannot retrieve rplidar health code: '%x'", op_result);
    return false;
 }
 
 void RPLidarNode::stop_motor(const EmptyRequest, EmptyResponse)
 {
-   if (nullptr == m_driver) {
+   if (m_driver == nullptr) {
       return;
    }
 
@@ -240,7 +241,7 @@ void RPLidarNode::stop_motor(const EmptyRequest, EmptyResponse)
 
 void RPLidarNode::start_motor(const EmptyRequest, EmptyResponse)
 {
-   if (nullptr == m_driver) {
+   if (m_driver == nullptr) {
       return;
    }
 
@@ -300,11 +301,10 @@ bool RPLidarNode::set_scan_mode()
       return false;
    }
 
-   constexpr float DEFAULT_FREQUENCY = 10.0; // hz
    const float samples_per_microsecond = 1 / current_scan_mode.us_per_sample;
    const float samples_per_second = 1e6 * samples_per_microsecond;
    const float samples_per_rotation = samples_per_second / DEFAULT_FREQUENCY; // Each rotation is 1000 ms
-   const float samples_per_degree = samples_per_rotation / 360.0;
+   const float samples_per_degree = samples_per_rotation / 360.0f;
 
    m_angle_compensate_multiple = samples_per_degree; // minimum viable theoretical samples per degrees rotated
    m_angle_compensate_multiple = std::max(m_angle_compensate_multiple, 1.0f); // minimum of 1 sample per degree

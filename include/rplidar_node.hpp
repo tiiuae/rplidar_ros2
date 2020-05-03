@@ -49,6 +49,7 @@
 namespace {
 constexpr auto M_PI{3.1415926535897932384626433832795};
 constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
+constexpr float DEFAULT_FREQUENCY = 10.0; // hz
 
 using LaserScan = sensor_msgs::msg::LaserScan;
 using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
