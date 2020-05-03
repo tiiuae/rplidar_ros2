@@ -311,7 +311,7 @@ bool RPLidarNode::set_scan_mode()
    m_max_distance = current_scan_mode.max_distance;
 
    RCLCPP_INFO(logger,
-               "current scan mode: %s, max_distance: %.1f m, Point number: %.1fK , angle_compensate: %d",
+               "current scan mode: %s, max_distance: %.1f m, Point number: %.1fK , angle_compensate: %.1f",
                current_scan_mode.scan_mode,
                current_scan_mode.max_distance,
                (1000 / current_scan_mode.us_per_sample),
