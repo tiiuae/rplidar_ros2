@@ -60,12 +60,12 @@ using namespace std::chrono_literals;
 
 namespace rplidar_ros {
 
-constexpr double deg_2_rad(double x)
+constexpr double degreesToRadians(double x)
 {
    return x * M_PI / 180.0;
 }
 
-static float getAngle(const rplidar_response_measurement_node_hq_t& node)
+static float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
 {
    return node.angle_z_q14 * 90.f / 16384.f;
 }
@@ -100,7 +100,7 @@ class RPLIDAR_ROS_PUBLIC rplidar_node : public rclcpp::Node
    std::string m_frame_id;
    bool m_inverted;
    bool m_angle_compensate;
-   size_t m_angle_compensate_multiple;
+   float m_angle_compensate_multiple;
    std::string m_scan_mode;
    /* Publisher */
    LaserScanPub m_publisher;
@@ -115,8 +115,8 @@ class RPLIDAR_ROS_PUBLIC rplidar_node : public rclcpp::Node
    size_t m_scan_count{0};
    float m_min_distance{0.15f};
    float m_max_distance{8.0};
-   float m_angle_min{deg_2_rad(0)};
-   float m_angle_max{deg_2_rad(359)};
+   float m_angle_min{degreesToRadians(0)};
+   float m_angle_max{degreesToRadians(359)};
 };
 
 } // namespace rplidar_ros

@@ -310,8 +310,8 @@ bool rplidar_node::set_scan_mode()
    const float samples_per_rotation = samples_per_second / DEFAULT_FREQUENCY; // Each rotation is 1000 ms
    const float samples_per_degree = samples_per_rotation / 360.0;
 
-   m_angle_compensate_multiple = static_cast<size_t>(samples_per_degree);
-   m_angle_compensate_multiple = std::max(m_angle_compensate_multiple, 1ul);
+   m_angle_compensate_multiple = samples_per_degree;
+   m_angle_compensate_multiple = std::max(m_angle_compensate_multiple, 1.0f);
    m_max_distance = current_scan_mode.max_distance;
 
    RCLCPP_INFO(logger,
@@ -339,57 +339,55 @@ void rplidar_node::publish_loop()
 
    op_result = m_driver->ascendScanData(&sample_nodes[0], sample_count);
 
-   m_angle_min = deg_2_rad(0.0f);
-   m_angle_max = deg_2_rad(359.0f);
+   m_angle_min = degreesToRadians(0.0f);
+   m_angle_max = degreesToRadians(359.0f);
 
    if (op_result == RESULT_OK) {
-      RCLCPP_DEBUG(logger, "publish_loop: Result is okay");
+      constexpr auto is_valid_node = [](const auto& node) -> bool { return node.dist_mm_q2 != 0; };
+
+      const auto end_node = std::find_if(sample_nodes.rbegin(), sample_nodes.rend(), is_valid_node);
+      const auto start_node = std::find_if(sample_nodes.begin(), sample_nodes.end(), is_valid_node);
+
+      m_angle_min = degreesToRadians(getAngleInDegrees(*start_node));
+      m_angle_max = degreesToRadians(getAngleInDegrees(*end_node));
+
+      /**
+       * turn this -> [0, 0, 0, 1, 2, 3, 0, 0]
+       * into this -> [1, 2, 3, 0, 0, 0, 0, 0]
+       */
+      std::rotate(sample_nodes.begin(), start_node, end_node.base());
+      const size_t nodes_count = end_node.base() - start_node + 1;
+
       if (m_angle_compensate) {
-         RCLCPP_DEBUG(logger, "angle_compensate");
+         /**
+          * Output a fixed number of lidar points and map them to the closest angle possible
+          * RPlidar by default will output a variable number of samples around a fixed sample
+          * Example:
+          * Number of nodes -> 535 - 543 (not consistent)
+          * Number of compensation nodes-> 525 (a nice fixed number of samples)
+          *
+          * We want 525 of the 543, that are evenly distributed
+          * Our delta then will be 543/525 = 1.03
+          */
          const size_t angle_compensate_nodes_count = 360 * m_angle_compensate_multiple;
+         ResponseNodeArray angle_compensate_nodes{};
 
-         int angle_compensate_offset = 0;
-         ResponseNodeArray angle_compensate_nodes{0};
-
-         for (size_t index = 0; index < sample_count; ++index) {
-            if (sample_nodes[index].dist_mm_q2 != 0) {
-               const float angle = getAngle(sample_nodes[index]);
-               const int angle_value = static_cast<int>(angle * m_angle_compensate_multiple);
-               angle_compensate_offset = std::max(angle_compensate_offset, angle_value);
-
-               for (size_t j = 0; j < m_angle_compensate_multiple; j++) {
-                  angle_compensate_nodes[angle_value - angle_compensate_offset + j] = sample_nodes[index];
-               }
-            }
+         float angle_compensation_position = 0;
+         float angle_compensation_delta = static_cast<double>(nodes_count) / angle_compensate_nodes_count;
+         for (size_t index = 0; index < angle_compensate_nodes_count; ++index) {
+            angle_compensate_nodes[index] = sample_nodes[static_cast<size_t>(angle_compensation_position)];
+            RCLCPP_DEBUG(logger, "%f", getAngleInDegrees(angle_compensate_nodes[index]));
+            angle_compensation_position += angle_compensation_delta;
          }
 
          publish_scan(scan_duration, angle_compensate_nodes, angle_compensate_nodes_count);
+
       } else {
-         RCLCPP_DEBUG(logger, "normal");
-         constexpr auto is_valid_node = [](const auto& node) -> bool { return node.dist_mm_q2 != 0; };
-
-         const auto end_node = std::find_if(sample_nodes.rbegin(), sample_nodes.rend(), is_valid_node);
-         const auto start_node = std::find_if(sample_nodes.begin(), sample_nodes.end(), is_valid_node);
-
-         m_angle_min = deg_2_rad(getAngle(*start_node));
-         m_angle_max = deg_2_rad(getAngle(*end_node));
-
-         /**
-          * turn this -> [0, 0, 0, 1, 2, 3, 0, 0]
-          * into this -> [1, 2, 3, 0, 0, 0, 0, 0]
-          */
-         std::rotate(sample_nodes.begin(), start_node, end_node.base());
-
-         const size_t num_nodes = end_node.base() - start_node + 1;
-         publish_scan(scan_duration, sample_nodes, num_nodes);
+         publish_scan(scan_duration, sample_nodes, nodes_count);
       }
 
    } else if (op_result == RESULT_OPERATION_FAIL) {
-      RCLCPP_DEBUG(logger, "publish_loop: result operation fail");
-      // All the data is invalid, just publish them
-      float angle_min = deg_2_rad(0.0f);
-      float angle_max = deg_2_rad(359.0f);
-
+      RCLCPP_WARN(logger, "Failed to organize data in ascending format. Publishing invalid dat anyways.");
       publish_scan(scan_duration, sample_nodes, sample_count);
    }
 }
