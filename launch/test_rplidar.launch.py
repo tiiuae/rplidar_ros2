@@ -9,7 +9,7 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             node_name='rplidar',
-            package='rplidar_ros',
+            package='rplidar_ros2',
             node_executable='rplidar',
             output='screen',
             parameters=[
@@ -19,7 +19,7 @@ def generate_launch_description():
         ),
         Node(
             node_name='rplidar_client',
-            package='rplidar_ros',
+            package='rplidar_ros2',
             node_executable='rplidar_client',
             output='screen',
         ),

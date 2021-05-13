@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9.5)
-project(rplidar_ros)
+project(rplidar_ros2)
 
 if (NOT CMAKE_C_STANDARD)
     set(CMAKE_C_STANDARD 99)
