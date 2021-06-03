@@ -70,8 +70,12 @@ ament_target_dependencies(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_comp
 ament_auto_add_executable(rplidar src/rplidar.cpp)
 target_link_libraries(rplidar rplidar_node)
 
-install(TARGETS rplidar_client rplidar rplidar_sdk
+install(TARGETS rplidar_client rplidar
         DESTINATION lib/${PROJECT_NAME})
+
+# On the drone LD_LIBRARY_PATH only available for /opt/ros/foxy/lib
+install(TARGETS rplidar_sdk rplidar_node
+        DESTINATION lib/)
 
 install(DIRECTORY launch rviz config
         DESTINATION share/${PROJECT_NAME})
