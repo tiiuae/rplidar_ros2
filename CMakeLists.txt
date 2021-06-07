@@ -70,14 +70,14 @@ ament_target_dependencies(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_comp
 ament_auto_add_executable(rplidar src/rplidar.cpp)
 target_link_libraries(rplidar rplidar_node)
 
-install(TARGETS rplidar_client rplidar rplidar_sdk
+install(TARGETS rplidar_client rplidar
         DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch rviz config
         DESTINATION share/${PROJECT_NAME})
 
 # Install the shared library composition node
-install(TARGETS rplidar_node
+install(TARGETS rplidar_node rplidar_sdk
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin)
