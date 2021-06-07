@@ -13,7 +13,7 @@ def generate_launch_description():
             node_executable='rplidar',
             output='screen',
             parameters=[
-                path.join(get_package_share_directory('rplidar_ros'), 'config',
+                path.join(get_package_share_directory('rplidar_ros2'), 'config',
                           'rplidar_tcp.yaml')
             ],
         ),
