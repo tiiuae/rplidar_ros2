@@ -1,0 +1,16 @@
+#!/bin/bash
+
+mkdir -p /etc/udev/rules.d
+
+# set the udev rule , make the device_port be fixed by rplidar
+
+cat << EOF > /etc/udev/rules.d/82-rplidar.rules
+
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE:="0777", SYMLINK+="rplidar"
+
+EOF
+
+# KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", TAG+="uaccess", TAG+="systemd", ENV{SYSTEMD_WANTS}="rplidar.service"
+# SUBSYSTEM=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", GROUP="plugdev"
+
+chmod 644 /etc/udev/rules.d/82-rplidar.rules
