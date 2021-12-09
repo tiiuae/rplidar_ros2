@@ -6,9 +6,9 @@ from launch import LaunchDescription
 def generate_launch_description():
     return LaunchDescription([
         Node(
-            node_name='rplidar',
+            name='rplidar',
             package='rplidar_ros2',
-            node_executable='rplidar',
+            executable='rplidar',
             output='screen',
             parameters=[
                 path.join(get_package_share_directory('rplidar_ros2'), 'config',

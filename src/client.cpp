@@ -47,7 +47,7 @@ void scanCallback(const std::shared_ptr<sensor_msgs::msg::LaserScan> scan)
    const auto& logger = rclcpp::get_logger("RPlidar Client");
    const auto count = static_cast<size_t>(scan->scan_time / scan->time_increment);
 
-   RCLCPP_INFO(logger, "I heard a laser scan %s[%d]:", scan->header.frame_id.c_str(), count);
+   RCLCPP_INFO(logger, "I heard a laser scan %s[%ld]:", scan->header.frame_id.c_str(), count);
    RCLCPP_INFO(logger, "angle_range, %f, %f", radians_to_degrees(scan->angle_min), radians_to_degrees(scan->angle_max));
 
    for (size_t index = 0; index < count; ++index) {
