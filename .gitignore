@@ -34,13 +34,6 @@
 # clion
 .idea
 
-# ignore build directories
-*build*
 
-# ignore install directory from colcon
-*install*
-
-# ros2 log
-log/
 
 debian/
