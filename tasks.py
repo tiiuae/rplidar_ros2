@@ -25,13 +25,10 @@ def init(c):
     with c.cd(THISDIR):
         c.run("git submodule init", hide=True)
 
-@task(
-    init,
-    help={'public': "clone public submodules by default. Unset to clone all repositories."}
-)
+@task(init)
 def clone(c):
     """
-    Clone fog-sw repository submodules.
+    Clone this repository submodules.
     """
     submodules = get_submodules(c)
     with c.cd(THISDIR):
@@ -45,7 +42,7 @@ def clone(c):
 )
 def build_env(c, nocache=False, pull=False, ros_distro="foxy"):
     """
-    Create fog-sw Docker build environment.
+    Create rplidar_ros2 Docker build environment.
     """
     args = []
     args.append("--build-arg UID=$(id -u)")
@@ -83,7 +80,7 @@ def clean(c, reallyclean=False):
 )
 def create_deb_package(c, out_dir="../bin/", ros_distro="foxy"):
     """
-    Build fog-sw ROS2 modules
+    Build rplidar_ros2 debian package
     """
     c.run("ROS_DISTRO={0} ./build.sh {1}".format(ros_distro, out_dir))
 
@@ -94,7 +91,7 @@ def create_deb_package(c, out_dir="../bin/", ros_distro="foxy"):
 )
 def build_docker(c, nocache=False, pull=False, ros_distro="foxy"):
     """
-    Build drivers and other system components
+    Build Docker image of this component
     """
     args = []
     args.append("--build-arg UID=$(id -u)")
