@@ -10,7 +10,6 @@ WORKDIR /$PACKAGE_NAME/main_ws
 USER root
 ADD . /$PACKAGE_NAME/main_ws/src
 RUN chown -R builder:builder /$PACKAGE_NAME/main_ws
-RUN chown -R builder:builder /$PACKAGE_NAME/entrypoint.sh
 
 USER builder
 
