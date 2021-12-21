@@ -87,9 +87,10 @@ def create_deb_package(c, out_dir="../bin/", ros_distro="foxy"):
 @task(build_env,
     help={'nocache': "do not use cache when building the image",
           'pull': "always attempt to pull a newer version of the image",
-          'ros_distro': "ROS distro to use (Available [foxy, galactic])"}
+          'ros_distro': "ROS distro to use (Available [foxy, galactic])",
+          'image_name': "name of output docker image"}
 )
-def build_docker(c, nocache=False, pull=False, ros_distro="foxy"):
+def build_docker(c, nocache=False, pull=False, ros_distro="foxy", image_name=MODULE_NAME):
     """
     Build Docker image of this component
     """
@@ -100,7 +101,7 @@ def build_docker(c, nocache=False, pull=False, ros_distro="foxy"):
     args.append("--build-arg PACKAGE_NAME=%s" % MODULE_NAME)
     args.append("--build-arg FROM_IMAGE=%s:build_env" % MODULE_NAME)
     args.append("-f Dockerfile")
-    args.append("-t %s:latest" % MODULE_NAME)
+    args.append("-t %s" % image_name)
     if nocache:
         args.append("--no-cache")
     elif pull:
