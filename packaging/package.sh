@@ -81,14 +81,10 @@ echo "[INFO] Version: ${version}."
 #* commit: ${git_commit_hash}
 #EOF_CHANGELOG
 
-# Extract not satisfied dependencies from output, check if they are exist in ../underlay.repos
-if rosdep check --from-paths ${mod_dir} 1> /dev/null 2>&1; then
-	echo "[INFO] Dependencies are satisfied."
-else
-	echo "[INFO] System dependencies have not been satisfied. Running rosdep install.."
-	echo "[INFO] Building dependencies using underlay.repos."
-	${mod_dir}/packaging/build_deps.sh ${mod_dir}
-fi
+### Run build_deps.sh script to check if dependencies are satisfied.
+### If not, get them with underlay.repos and build them inside deps_ws
+#${mod_dir}/packaging/build_deps.sh ${mod_dir}
+
 
 if [ -e ${mod_dir}/ros2_ws ]; then
 	# From fog-sw repo.

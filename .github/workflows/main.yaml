@@ -21,12 +21,14 @@ jobs:
 
       # Run docker build
       - name: Run rplidar_ros2 docker build
+        env:
+          ROS: 1
+          ROS_DISTRO: ${{ matrix.ros2_distro }}
+          PACKAGE_NAME: rplidar_ros2
         run: |
           set -eux
           mkdir bin
           pushd rplidar_ros2
-          export ROS=1
-          export ROS_DISTRO=${{ matrix.ros2_distro }}
           ./build.sh ../bin/
           popd
 

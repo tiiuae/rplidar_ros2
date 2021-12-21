@@ -25,11 +25,10 @@ rosdep update
 
 apt update
 echo "[INFO] Running rosdep install.."
-ls ${mod_dir}
-if rosdep install --from-paths ${mod_dir} -r -y --rosdistro ${ROS_DISTRO} 1> /dev/null 2>&1; then
+if rosdep install --from-paths ${mod_dir}/packaging -r -y --rosdistro ${ROS_DISTRO} 1> /dev/null 2>&1; then
 	echo "[INFO] rosdep install finished successfully."
 else
-	echo "[ERROR] Some dependencies missing."
+	echo "[ERROR] Some dependencies missing. It will be built using underlay.repos."
 fi
 
 exit 0
