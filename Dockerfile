@@ -27,5 +27,7 @@ RUN sed --in-place \
         chmod +x /$PACKAGE_NAME/entrypoint.sh
 
 ENV PACKAGE_NAME $PACKAGE_NAME
+ENV DRONE_DEVICE_ID sad03
+ENV SIMULATION 1
 WORKDIR /$PACKAGE_NAME
 ENTRYPOINT "/"$PACKAGE_NAME"/entrypoint.sh"

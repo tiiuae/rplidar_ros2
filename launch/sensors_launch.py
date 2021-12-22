@@ -4,6 +4,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch.substitutions import ThisLaunchFileDir
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 import os
@@ -16,6 +17,8 @@ def generate_launch_description():
 
     # environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
+    # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
+    SIMULATION = os.getenv('SIMULATION')
 
     # arguments
     ld.add_action(DeclareLaunchArgument("rplidar_mode", default_value="outdoor"))
@@ -27,7 +30,7 @@ def generate_launch_description():
     # Boost: optimized for sample rate 
     # Stability: for light elimination performance, but shorter range and lower sample rate 
     rplidar_mode = PythonExpression(['"Stability" if "outdoor" == "', LaunchConfiguration("rplidar_mode"), '" else "Sensitivity"'])
-
+    simulation_mode = (SIMULATION == "1")
     #namespace declarations
     namespace = DRONE_DEVICE_ID
 
@@ -41,6 +44,7 @@ def generate_launch_description():
             namespace = namespace,
             package = 'rplidar_ros2',
             executable = 'rplidar',
+            condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
             parameters = [{
                 'serial_port': LaunchConfiguration("serial_port"),
