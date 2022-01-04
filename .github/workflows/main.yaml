@@ -9,6 +9,9 @@ on:
 jobs:
   tii-deb-build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ros2_distro: [foxy, galactic]
     steps:
 
       - name: Checkout rplidar_ros2
@@ -16,25 +19,22 @@ jobs:
         with:
           path: rplidar_ros2
 
-      - name: Checkout ci-scripts
-        uses: actions/checkout@v2
-        with:
-          repository: tiiuae/fogsw-ci-scripts
-          path: fogsw-ci-scripts
-
       # Run docker build
       - name: Run rplidar_ros2 docker build
+        env:
+          ROS: 1
+          ROS_DISTRO: ${{ matrix.ros2_distro }}
+          PACKAGE_NAME: rplidar_ros2
         run: |
           set -eux
           mkdir bin
-          pushd fogsw-ci-scripts
-          export ROS=1
-          ./generate_deb.sh ../rplidar_ros2 ../bin/
+          pushd rplidar_ros2
+          ./build.sh ../bin/
           popd
 
       - name: Install jfrog CLI tool
         env:
-          JFROG_CLI_URL: https://artifactory.ssrc.fi/artifactory/gen-public-local/tools/jfrog/jfrog-1.45.2.tar.gz
+          JFROG_CLI_URL: https://ssrc.jfrog.io/artifactory/ssrc-gen-public-remote-cache/tools/jfrog/jfrog-1.45.2.tar.gz
         if: github.event_name == 'push'
         run: |
           set -exu
@@ -58,7 +58,7 @@ jobs:
           set -exu
           jfrog rt c import "$ARTIFACTORY_TOKEN"
           jfrog rt ping
-          pkg=$(find bin -name 'ros-foxy-rplidar-ros2*.deb')
+          pkg=$(find bin -name 'ros-${{ matrix.ros2_distro }}-rplidar-ros2*.deb')
           jfrog rt u --deb "$DISTRIBUTION/$COMPONENT/$ARCHITECTURE" \
                      --target-props COMMIT="$GITHUB_SHA" \
                      --build-name "$BUILD_NAME" \
