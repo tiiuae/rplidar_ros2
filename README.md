@@ -1,6 +1,43 @@
 RPLIDAR ROS package
 =====================================================================
 
+2D Laser Scanner (LIDAR) ROS node. Broadcasts each scan result into a ROS topic.
+Each result conceptually looks like this:
+
+```
+       xxxxxx
+       x     xxx
+       x       xx
+       x         x
+       x          xx
+       x           xxxxxx
+       x                xxx
+    xxxx                  xx
+   xx       o              xx
+  xx                        x
+ xx                         x
+xx                         x
+xx    xxxxx               xx
+ xxxxxx   xxxx          xxx
+             xxxxxxxx  xx
+                    xxx
+```
+
+Where:
+
+- the `o` is the lidar sensor itself ("origo")
+- each `x` is a distance (= a single number) from `o`
+
+
+Development, debug
+------------------
+
+[See documentation in container base image](https://github.com/tiiuae/fog-ros-baseimage/tree/main#development--debug-for-concrete-projects)
+
+
+Generic
+-------
+
 ROS node and test application for RPLIDAR
 
 Visit following Website for more details about RPLIDAR:
