@@ -5,7 +5,7 @@ COPY . /main_ws/src/
 # this:
 # 1) builds the application
 # 2) packages the application as .deb & writes it to build_output/
-RUN /packaging/build-and-package-as-deb.sh -o build_output/
+RUN /packaging/build.sh
 
 #  ▲               runtime ──┐
 #  └── build                 ▼
