@@ -15,16 +15,10 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
-    pkg_name = "rplidar_ros2"
-    pkg_share_path = get_package_share_directory(pkg_name)
-
     # environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
     # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
     SIMULATION = os.getenv('SIMULATION')
-
-    # arguments
-    ld.add_action(launch.actions.DeclareLaunchArgument("use_sim_time", default_value="false"))
 
     simulation_mode = (SIMULATION == "1")
     #namespace declarations
@@ -43,14 +37,32 @@ def generate_launch_description():
             condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
             parameters = [{
-                pkg_share_path + '/config/rplidar_a3.yaml',
-                {"use_sim_time": launch.substitutions.LaunchConfiguration("use_sim_time")},
                 'frame_id': rplidar_frame,
                 'topic_name': 'rplidar/scan',
                 'topic_name_raw': 'rplidar/scan_raw',
+                'channel_type': "serial",
+                'tcp_ip': "192.168.0.7",
+                'tcp_port': 20108,
+                'serial_baudrate': 256000,
+                'serial_port': "/dev/rplidar",
+
+                'inverted': False,
+                'angle_compensate': True,
+                'raw_enabled': True, # Enable/Disable raw scan publish
+
+                # Sensitivity: optimized for longer ranger, better sensitivity but weak environment elimination - indoor environment
+                # Boost: optimized for sample rate
+                # Stability: for light elimination performance, but shorter range and lower sample rate - outdoor environment
+                'scan_mode': "Stability",
+
+                'filter.enabled': True,
+                'filter.min_range': 0.3,
+                'filter.check_distance': 10.0,
+                'filter.scan_search_area': 10,
+                'filter.minimal_number_of_close_samples': 4,
+                'filter.minimal_distance_for_acceptance_samples': 0.5,
             }],
             output = 'screen',
-            parameters=[{"use_sim_time": launch.substitutions.LaunchConfiguration("use_sim_time")},],
         ),
     ),
 

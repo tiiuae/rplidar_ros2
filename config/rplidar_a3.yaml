@@ -1,4 +1,4 @@
-# serial - specify baudrate and serial port 
+# serial - specify baudrate and serial port
 # tcp - specify TCP address and port
 channel_type: "serial"
 tcp_ip: "192.168.0.7"

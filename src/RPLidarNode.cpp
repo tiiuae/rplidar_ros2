@@ -238,16 +238,19 @@ void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& 
     {
         for (int i = 0; i < (int)scan_msg.ranges.size(); i++)
         {
+            //Remove close points
             if (scan_msg.ranges[i] < filter_min_range_)
             {
                 filtered_scan_msg.ranges[i] = m_max_distance + 10;
             }
+
+            //Check points only until specific distance
             if (scan_msg.ranges[i] < filter_check_distance_)
             {
                 int close_samples = 0;
                 for (int it = -filter_scan_search_area_ / 2; it <= filter_scan_search_area_ / 2; it++)
                 {
-                    int tmpindex = 1 + it;
+                    int tmpindex = i + it;
 
                     if (tmpindex >= (int)scan_msg.ranges.size())
                     {
