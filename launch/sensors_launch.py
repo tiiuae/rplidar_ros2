@@ -15,21 +15,17 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
+    pkg_name = "rplidar_ros2"
+    pkg_share_path = get_package_share_directory(pkg_name)
+
     # environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
     # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
     SIMULATION = os.getenv('SIMULATION')
 
     # arguments
-    ld.add_action(DeclareLaunchArgument("rplidar_mode", default_value="outdoor"))
-    ld.add_action(DeclareLaunchArgument("serial_port", default_value="/dev/rplidar"))
+    ld.add_action(launch.actions.DeclareLaunchArgument("use_sim_time", default_value="false"))
 
-    # mode select for rplidar
-    # ----------------------
-    # Sensitivity: optimized for longer ranger, better sensitivity but weak environment elimination 
-    # Boost: optimized for sample rate 
-    # Stability: for light elimination performance, but shorter range and lower sample rate 
-    rplidar_mode = PythonExpression(['"Stability" if "outdoor" == "', LaunchConfiguration("rplidar_mode"), '" else "Sensitivity"'])
     simulation_mode = (SIMULATION == "1")
     #namespace declarations
     namespace = DRONE_DEVICE_ID
@@ -47,15 +43,14 @@ def generate_launch_description():
             condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
             parameters = [{
-                'serial_port': LaunchConfiguration("serial_port"),
-                'serial_baudrate': 256000,  # A3
+                pkg_share_path + '/config/rplidar_a3.yaml',
+                {"use_sim_time": launch.substitutions.LaunchConfiguration("use_sim_time")},
                 'frame_id': rplidar_frame,
-                'inverted': False,
-                'angle_compensate': True,
-                'scan_mode': rplidar_mode,
                 'topic_name': 'rplidar/scan',
+                'topic_name_raw': 'rplidar/scan_raw',
             }],
             output = 'screen',
+            parameters=[{"use_sim_time": launch.substitutions.LaunchConfiguration("use_sim_time")},],
         ),
     ),
 

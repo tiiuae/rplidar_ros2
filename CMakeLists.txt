@@ -33,6 +33,7 @@ target_include_directories(rplidar_sdk
 
 find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
+find_package(fog_lib REQUIRED)
 
 # Can't use ament_target_dependencies here, so need to manually
 # create targets for ros2 dependencies
@@ -58,13 +59,13 @@ ament_auto_find_build_dependencies(REQUIRED
 
 add_library(rplidar_node SHARED src/RPLidarNode.cpp)
 target_link_libraries(rplidar_node rclcpp sensor_msgs std_srvs rclcpp_components rplidar_sdk)
-ament_target_dependencies(rplidar_node rclcpp sensor_msgs std_srvs rclcpp_components)
+ament_target_dependencies(rplidar_node rclcpp sensor_msgs std_srvs rclcpp_components fog_lib)
 target_include_directories(rplidar_node PUBLIC include)
 
 # build direct ROS 1 port
 ament_auto_add_executable(rplidar_client src/client.cpp)
 target_link_libraries(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components)
-ament_target_dependencies(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components)
+ament_target_dependencies(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components fog_lib)
 
 # build composition node
 ament_auto_add_executable(rplidar src/rplidar.cpp)
