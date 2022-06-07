@@ -1,24 +1,7 @@
-# serial - specify baudrate and serial port
-# tcp - specify TCP address and port
-channel_type: "serial"
-tcp_ip: "192.168.0.7"
-tcp_port: 20108
-serial_baudrate: 256000
-serial_port: "/dev/rplidar"
-
-inverted: false
-angle_compensate: true
-raw_enabled: true # Enable/Disable raw scan publish
-
-# Sensitivity: optimized for longer ranger, better sensitivity but weak environment elimination - indoor environment
-# Boost: optimized for sample rate
-# Stability: for light elimination performance, but shorter range and lower sample rate - outdoor environment
-scan_mode: "Stability"
-
-filter:
-  enabled: true
-  min_range: 0.3
-  check_distance: 3.0
-  scan_search_area: 10
-  minimal_number_of_close_samples: 4
-  minimal_distance_for_acceptance_samples: 1.0
+rplidar:
+  ros__parameters:
+    serial_port: /dev/ttyUSB0
+    serial_baudrate: 256000
+    frame_id: laser_frame
+    inverted: false
+    angle_compensate: true
