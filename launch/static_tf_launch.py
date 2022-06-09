@@ -21,13 +21,11 @@ def generate_launch_description():
     garmin_frame = DRONE_DEVICE_ID + "/garmin"
 
     # Handle RPLidar rotation 
-    if ROTATE_180 == "true":
+    if ROTATE_180 == "1":
         rotate_180="3.14"
     else:
         rotate_180="0"
 
-    print(rotate_180)
-    
     # node definitions
     ld.add_action(
         Node(
@@ -35,7 +33,7 @@ def generate_launch_description():
             package = "tf2_ros", 
             executable = "static_transform_publisher",
             name= "fcu_to_rplidar_static_transform_publisher",
-            arguments = ["0", "0", "0.09", "0", "0", rotate_180, fcu_frame, rplidar_frame],
+            arguments = ["0", "0", "0.09", rotate_180, "0", "0", fcu_frame, rplidar_frame],
             output='screen',
         ),
     )
