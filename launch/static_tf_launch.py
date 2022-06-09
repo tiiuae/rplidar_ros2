@@ -1,5 +1,6 @@
 import launch
 from launch import LaunchDescription
+from launch.conditions import IfCondition
 from launch_ros.actions import Node
 import os
 
@@ -7,11 +8,9 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
-    # Launch Arguments
-    ld.add_action(launch.actions.DeclareLaunchArgument("rotate_180", default_value="false"))
-
     # environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
+    ROTATE_180 = os.getenv('ROTATE_180')
 
     #namespace declarations
     namespace = DRONE_DEVICE_ID
@@ -21,11 +20,13 @@ def generate_launch_description():
     rplidar_frame = DRONE_DEVICE_ID + "/rplidar"
     garmin_frame = DRONE_DEVICE_ID + "/garmin"
 
-    # Handle rotation
-    if launch.substitutions.LaunchConfiguration("rotate_180") == "true":
+    # Handle RPLidar rotation 
+    if ROTATE_180 == "true":
         rotate_180="3.14"
     else:
         rotate_180="0"
+
+    print(rotate_180)
     
     # node definitions
     ld.add_action(

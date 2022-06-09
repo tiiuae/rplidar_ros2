@@ -43,34 +43,31 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
     const auto& logger = this->get_logger();
 
     /* Parse general parameters from config file//{*/
+
     RCLCPP_INFO(get_logger(), "-------------- Loading parameters --------------");
 
-    rclcpp::Parameter param = this->get_parameter("channel_type");
-    m_channel_type = param.as_string();
-     this->get_parameter("tcp_ip", m_tcp_ip);
-     this->get_parameter("tcp_port", m_tcp_port);
-     this->get_parameter("serial_port", m_serial_port);
-     this->get_parameter("serial_baudrate", m_serial_baudrate);
-     this->get_parameter("frame_id", m_frame_id);
-     this->get_parameter("inverted", m_inverted);
-     this->get_parameter("angle_compensate", m_angle_compensate);
-     this->get_parameter("scan_mode", m_scan_mode);
-     this->get_parameter("topic_name_filtered", m_scan_topic_filtered);
-     this->get_parameter("topic_name_raw", m_scan_topic_raw);
-     this->get_parameter("raw_enabled", raw_enabled_);
+    m_channel_type = this->declare_parameter("channel_type", "0");
+    m_tcp_ip = this->declare_parameter("tcp_ip", "0.0.0.0");
+    m_tcp_port = this->declare_parameter("tcp_port", 0);
+    m_serial_port = this->declare_parameter("serial_port", "/dev");
+    m_serial_baudrate = this->declare_parameter("serial_baudrate", 0);
+    m_frame_id = this->declare_parameter("frame_id", "frame");
+    m_inverted = this->declare_parameter("inverted", true);
+    m_angle_compensate = this->declare_parameter("angle_compensate", true);
+    m_scan_mode = this->declare_parameter("scan_mode", "0");
+    m_scan_topic_filtered = this->declare_parameter("topic_name_filtered", "0");
+    m_scan_topic_raw = this->declare_parameter("topic_name_raw", "0");
+    raw_enabled_ = this->declare_parameter("raw_enabled", true);
 
-     this->get_parameter("filter.enabled", filter_enabled_);
-     this->get_parameter("filter.min_range", filter_min_range_);
-     this->get_parameter("filter.check_distance", filter_check_distance_);
-     this->get_parameter("filter.scan_search_area", filter_scan_search_area_);
-     this->get_parameter("filter.minimal_number_of_close_samples", filter_minimal_number_of_close_samples_);
-     this->get_parameter("filter.minimal_distance_for_acceptance_samples", filter_minimal_distance_for_acceptance_samples_);
+    filter_enabled_ = this->declare_parameter("filter.enabled", true);
+    filter_min_range_ = this->declare_parameter("filter.min_range", 0.0);
+    filter_check_distance_ = this->declare_parameter("filter.check_distance", 0.0);
+    filter_scan_search_area_ = this->declare_parameter("filter.scan_search_area", 0);
+    filter_minimal_number_of_close_samples_ = this->declare_parameter("filter.minimal_number_of_close_samples", 0);
+    filter_minimal_distance_for_acceptance_samples_ = this->declare_parameter("filter.minimal_distance_for_acceptance_samples", 0.0);
     /*//}*/
 
     RCLCPP_INFO(logger, "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
-    RCLCPP_INFO(logger, "serial port: '%s'",m_serial_port.c_str());
-    RCLCPP_INFO(logger, "serial port: '%s'",m_channel_type.c_str());
-    RCLCPP_INFO(logger, "serial port: '%s'",m_tcp_ip.c_str());
 
     /* initialize SDK */
     if (m_channel_type == "tcp")
