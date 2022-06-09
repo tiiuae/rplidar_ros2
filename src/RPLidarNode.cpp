@@ -35,8 +35,6 @@
 
 #include <RPLidarNode.hpp>
 
-using namespace fog_lib;
-
 namespace rplidar_ros
 {
 
@@ -46,41 +44,33 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
 
     /* Parse general parameters from config file//{*/
     RCLCPP_INFO(get_logger(), "-------------- Loading parameters --------------");
-    bool loaded_successfully = true;
 
-    loaded_successfully &= parse_param("channel_type", m_channel_type, *this);
-    loaded_successfully &= parse_param("tcp_ip", m_tcp_ip, *this);
-    loaded_successfully &= parse_param("tcp_port", m_tcp_port, *this);
-    loaded_successfully &= parse_param("serial_port", m_serial_port, *this);
-    loaded_successfully &= parse_param("serial_baudrate", m_serial_baudrate, *this);
-    loaded_successfully &= parse_param("frame_id", m_frame_id, *this);
-    loaded_successfully &= parse_param("inverted", m_inverted, *this);
-    loaded_successfully &= parse_param("angle_compensate", m_angle_compensate, *this);
-    loaded_successfully &= parse_param("scan_mode", m_scan_mode, *this);
-    loaded_successfully &= parse_param("topic_name", m_scan_topic, *this);
-    loaded_successfully &= parse_param("topic_name_raw", m_scan_topic_raw, *this);
-    loaded_successfully &= parse_param("raw_enabled", raw_enabled_, *this);
+    rclcpp::Parameter param = this->get_parameter("channel_type");
+    m_channel_type = param.as_string();
+     this->get_parameter("tcp_ip", m_tcp_ip);
+     this->get_parameter("tcp_port", m_tcp_port);
+     this->get_parameter("serial_port", m_serial_port);
+     this->get_parameter("serial_baudrate", m_serial_baudrate);
+     this->get_parameter("frame_id", m_frame_id);
+     this->get_parameter("inverted", m_inverted);
+     this->get_parameter("angle_compensate", m_angle_compensate);
+     this->get_parameter("scan_mode", m_scan_mode);
+     this->get_parameter("topic_name_filtered", m_scan_topic_filtered);
+     this->get_parameter("topic_name_raw", m_scan_topic_raw);
+     this->get_parameter("raw_enabled", raw_enabled_);
 
-    loaded_successfully &= parse_param("filter.enabled", filter_enabled_, *this);
-    loaded_successfully &= parse_param("filter.min_range", filter_min_range_, *this);
-    loaded_successfully &= parse_param("filter.check_distance", filter_check_distance_, *this);
-    loaded_successfully &= parse_param("filter.scan_search_area", filter_scan_search_area_, *this);
-    loaded_successfully &=
-        parse_param("filter.minimal_number_of_close_samples", filter_minimal_number_of_close_samples_, *this);
-    loaded_successfully &= parse_param(
-        "filter.minimal_distance_for_acceptance_samples", filter_minimal_distance_for_acceptance_samples_, *this);
+     this->get_parameter("filter.enabled", filter_enabled_);
+     this->get_parameter("filter.min_range", filter_min_range_);
+     this->get_parameter("filter.check_distance", filter_check_distance_);
+     this->get_parameter("filter.scan_search_area", filter_scan_search_area_);
+     this->get_parameter("filter.minimal_number_of_close_samples", filter_minimal_number_of_close_samples_);
+     this->get_parameter("filter.minimal_distance_for_acceptance_samples", filter_minimal_distance_for_acceptance_samples_);
     /*//}*/
 
-    // Check if all parameters were loaded correctly
-    if (!loaded_successfully)
-    {
-        const std::string str = "Could not load all non-optional parameters. Shutting down.";
-        RCLCPP_ERROR(get_logger(), "%s", str.c_str());
-        rclcpp::shutdown();
-        return;
-    }
-
     RCLCPP_INFO(logger, "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
+    RCLCPP_INFO(logger, "serial port: '%s'",m_serial_port.c_str());
+    RCLCPP_INFO(logger, "serial port: '%s'",m_channel_type.c_str());
+    RCLCPP_INFO(logger, "serial port: '%s'",m_tcp_ip.c_str());
 
     /* initialize SDK */
     if (m_channel_type == "tcp")
@@ -142,7 +132,7 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
 
     /* Publishers */
     rclcpp::QoS qos(rclcpp::KeepLast(3));
-    m_publisher = this->create_publisher<LaserScan>(m_scan_topic, qos);
+    m_publisher_filtered = this->create_publisher<LaserScan>(m_scan_topic_filtered, qos);
     m_publisher_raw = this->create_publisher<LaserScan>(m_scan_topic_raw, qos);
 
     m_stop_motor_service = this->create_service<std_srvs::srv::Empty>(
@@ -274,9 +264,9 @@ void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& 
                 }
             }
         }
+        m_publisher_filtered->publish(filtered_scan_msg);
     }
 
-    m_publisher->publish(filtered_scan_msg);
     /*//}*/
 }
 

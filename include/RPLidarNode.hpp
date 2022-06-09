@@ -46,8 +46,6 @@
 #include <visibility.h>
 #include <chrono>
 
-#include <fog_lib/params.h>
-
 namespace
 {
 constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
@@ -108,7 +106,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
     std::string m_channel_type;
     std::string m_tcp_ip;
     std::string m_serial_port;
-    std::string m_scan_topic;
+    std::string m_scan_topic_filtered;
     std::string m_scan_topic_raw;
     int m_tcp_port;
     int m_serial_baudrate;
@@ -128,7 +126,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
     double filter_minimal_distance_for_acceptance_samples_;
 
     /* Publisher */
-    LaserScanPub m_publisher;
+    LaserScanPub m_publisher_filtered;
     LaserScanPub m_publisher_raw;
 
     /* Services */
