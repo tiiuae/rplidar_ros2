@@ -1,7 +1,6 @@
 #!/bin/bash -e
 
-if [ "${SIMULATION+x}" != "" ]; then
-    exec ros-with-env ros2 launch rplidar_ros2 static_tf_launch.py
-else
-    exec ros-with-env ros2 launch rplidar_ros2 sensors_launch.py
-fi
+# launch file checks env variable SIMULATION and DRONE_TYPE 
+# SIMULATION is by default 0. However, it can be set to 1
+# DRONE_TYPE is by default T-DRONE. However, it can be set to HOLYBRO
+exec ros-with-env ros2 launch rplidar_ros2 sensors_launch.py

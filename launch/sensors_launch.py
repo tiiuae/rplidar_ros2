@@ -2,6 +2,7 @@ import launch
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
+from launch.actions import LogInfo
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch.substitutions import ThisLaunchFileDir
@@ -18,14 +19,14 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
-    # Launch arguments
-    # ld.add_action(launch.actions.DeclareLaunchArgument("mode", default_value="outdoor"))
-
     # Environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
     # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
     SIMULATION = os.getenv('SIMULATION')
     simulation_mode = (SIMULATION == "1")
+
+    DRONE_TYPE = os.getenv('DRONE_TYPE')
+    is_robot_holybro_type = (DRONE_TYPE == "HOLYBRO")
 
     # Namespace declarations
     namespace = DRONE_DEVICE_ID
@@ -35,12 +36,11 @@ def generate_launch_description():
     rplidar_frame = DRONE_DEVICE_ID + "/rplidar" # the same definition is in static_tf_launch.py file
     garmin_frame = DRONE_DEVICE_ID + "/garmin"   # the same definition is in static_tf_launch.py file
 
-    # Config file path
-    # if launch.substitutions.LaunchConfiguration("mode")=="outdoor":
-    #     config = os.path.join(get_package_share_directory('rplidar_ros2'),'config','rplidar_a3_outdoor.yaml')
-    # else:
-    #     config = os.path.join(get_package_share_directory('rplidar_ros2'),'config','rplidar_a3_indoor.yaml')
-        
+    # simulation
+    ld.add_action(
+        LogInfo(msg='--- SIMULATION CONFIGURATION ---', condition=IfCondition(PythonExpression([str(simulation_mode)]))),
+    ),
+    # rplidar driver launch
     ld.add_action(
         Node(
             namespace = namespace,
@@ -77,9 +77,25 @@ def generate_launch_description():
         ),
     ),
 
+
+    # sensor tf launch
+    ld.add_action(
+        LogInfo(msg='--- HOLYBRO TYPE CONFIGURATION ---', condition=IfCondition(PythonExpression([str(is_robot_holybro_type)]))),
+    ),
     ld.add_action(
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/static_tf_launch.py'])
+            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/static_tf_holybro_launch.py']),
+            condition=IfCondition(PythonExpression([str(is_robot_holybro_type)])),
+        ),
+    ),
+
+    ld.add_action(
+        LogInfo(msg='--- T-DRONE TYPE CONFIGURATION ---', condition=IfCondition(PythonExpression(['not ', str(is_robot_holybro_type)]))),
+    ),
+    ld.add_action(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/static_tf_tdrone_launch.py']),
+            condition=IfCondition(PythonExpression(['not ', str(is_robot_holybro_type)])),
         ),
     ),
 

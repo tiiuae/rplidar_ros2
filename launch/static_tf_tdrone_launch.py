@@ -10,7 +10,6 @@ def generate_launch_description():
 
     # environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
-    ROTATE_180 = os.getenv('ROTATE_180')
 
     #namespace declarations
     namespace = DRONE_DEVICE_ID
@@ -20,12 +19,6 @@ def generate_launch_description():
     rplidar_frame = DRONE_DEVICE_ID + "/rplidar"
     garmin_frame = DRONE_DEVICE_ID + "/garmin"
 
-    # Handle RPLidar rotation 
-    if ROTATE_180 == "1":
-        rotate_180="3.14"
-    else:
-        rotate_180="0"
-
     # node definitions
     ld.add_action(
         Node(
@@ -33,7 +26,7 @@ def generate_launch_description():
             package = "tf2_ros", 
             executable = "static_transform_publisher",
             name= "fcu_to_rplidar_static_transform_publisher",
-            arguments = ["0", "0", "0.09", rotate_180, "0", "0", fcu_frame, rplidar_frame],
+            arguments = ["-0.078", "0", "0.0614", "3.141592", "0", "0", fcu_frame, rplidar_frame],
             output='screen',
         ),
     )
@@ -44,7 +37,7 @@ def generate_launch_description():
             package = "tf2_ros", 
             executable = "static_transform_publisher",
             name= "fcu_to_garmin_static_transform_publisher",
-            arguments = ["-0.007", "-0.05", "-0.036", "0", "0", "0", fcu_frame, garmin_frame],
+            arguments = ["-0.20", "0", "0.0139", "0", "1.5708", "0", fcu_frame, garmin_frame],
             output='screen',
         ),
     )
