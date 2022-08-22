@@ -19,6 +19,9 @@ def generate_launch_description():
 
     ld = LaunchDescription()
 
+    pkg_name = "rplidar_ros2"
+    pkg_share_path = get_package_share_directory(package_name=pkg_name)
+
     # Environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
     # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
@@ -44,14 +47,13 @@ def generate_launch_description():
     ld.add_action(
         Node(
             namespace = namespace,
-            package = 'rplidar_ros2',
+            package = pkg_name,
             executable = 'rplidar',
             condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
-            parameters = [{
-                path.join(get_package_share_directory('rplidar_ros2'), 'config',
-                          'config.yaml'),
-                'frame_id': rplidar_frame,
+            parameters = [
+                pkg_share_path + '/config/params.yaml',
+                {"frame_id": rplidar_frame},
             ],
             output = 'screen',
         ),
