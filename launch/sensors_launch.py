@@ -49,30 +49,10 @@ def generate_launch_description():
             condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
             parameters = [{
+                path.join(get_package_share_directory('rplidar_ros2'), 'config',
+                          'config.yaml'),
                 'frame_id': rplidar_frame,
-                'topic_name_filtered': 'rplidar/scan_filtered',
-                'topic_name_raw': 'rplidar/scan',
-                'channel_type': "serial",
-                'tcp_ip': "192.168.0.7",
-                'tcp_port': 20108,
-                'serial_baudrate': 256000,
-                'serial_port': "/dev/rplidar",
-
-                'inverted': False,
-                'angle_compensate': True,
-                'raw_enabled': True, # Enable/Disable raw scan publish
-
-                # Sensitivity: optimized for longer ranger, better sensitivity but weak environment elimination - indoor environment
-                # Boost: optimized for sample rate
-                # Stability: for light elimination performance, but shorter range and lower sample rate - outdoor environment
-                'scan_mode': "Stability",
-
-                'filter.enabled': True,
-                'filter.min_range': 0.3,
-                'filter.check_distance': 10.0,
-                'filter.scan_search_area': 15,
-                'filter.minimal_number_of_close_samples': 8,
-                'filter.minimal_distance_for_acceptance_samples': 0.1,}],
+            ],
             output = 'screen',
         ),
     ),

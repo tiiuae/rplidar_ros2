@@ -1,3 +1,4 @@
+// clang: MatousFormat
 /*
  *  Rplidar ROS NODE
  *
@@ -38,8 +39,8 @@
 namespace rplidar_ros
 {
 
-RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rplidar_node", options)
-{
+  RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rplidar_node", options)
+  {
     const auto& logger = this->get_logger();
 
     /* Parse general parameters from config file//{*/
@@ -72,59 +73,57 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
     /* initialize SDK */
     if (m_channel_type == "tcp")
     {
-        m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP));
-    }
-    else
+      m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP));
+    } else
     {
-        m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT));
+      m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT));
     }
 
     if (m_driver == nullptr)
     {
-        /* don't start spinning without a driver object */
-        RCLCPP_ERROR(logger, "Failed to construct driver");
-        throw std::bad_alloc();
+      /* don't start spinning without a driver object */
+      RCLCPP_ERROR(logger, "Failed to construct driver");
+      throw std::bad_alloc();
     }
 
     if (m_channel_type == "tcp")
     {
-        // make connection...
-        if (IS_FAIL(m_driver->connect(m_tcp_ip.c_str(), static_cast<uint32_t>(m_tcp_port))))
-        {
-            std::stringstream error_string;
-            error_string << "Cannot bind to the specified TCP host: " << m_tcp_ip << ":" << m_tcp_port;
-            throw std::runtime_error(error_string.str());
-        }
-    }
-    else
+      // make connection...
+      if (IS_FAIL(m_driver->connect(m_tcp_ip.c_str(), static_cast<uint32_t>(m_tcp_port))))
+      {
+        std::stringstream error_string;
+        error_string << "Cannot bind to the specified TCP host: " << m_tcp_ip << ":" << m_tcp_port;
+        throw std::runtime_error(error_string.str());
+      }
+    } else
     {
-        // make connection...
-        if (IS_FAIL(m_driver->connect(m_serial_port.c_str(), (_u32)m_serial_baudrate)))
-        {
-            std::stringstream error_string;
-            error_string << "Cannot bind to the specified serial port '" << m_serial_port << "'";
-            throw std::runtime_error(error_string.str());
-            return;
-        }
+      // make connection...
+      if (IS_FAIL(m_driver->connect(m_serial_port.c_str(), (_u32)m_serial_baudrate)))
+      {
+        std::stringstream error_string;
+        error_string << "Cannot bind to the specified serial port '" << m_serial_port << "'";
+        throw std::runtime_error(error_string.str());
+        return;
+      }
     }
 
     if (!print_device_info())
     {
-        throw std::runtime_error("Failed to get device info.");
+      throw std::runtime_error("Failed to get device info.");
     }
 
     if (!is_healthy())
     {
-        throw std::runtime_error("Failed the health check.");
+      throw std::runtime_error("Failed the health check.");
     }
 
     m_driver->startMotor();
 
     if (!set_scan_mode())
     {
-        m_driver->stop();
-        m_driver->stopMotor();
-        throw std::runtime_error("Failed to set the scan mode.");
+      m_driver->stop();
+      m_driver->stopMotor();
+      throw std::runtime_error("Failed to set the scan mode.");
     }
 
     /* Publishers */
@@ -132,23 +131,23 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
     m_publisher_filtered = this->create_publisher<LaserScan>(m_scan_topic_filtered, qos);
     m_publisher_raw = this->create_publisher<LaserScan>(m_scan_topic_raw, qos);
 
-    m_stop_motor_service = this->create_service<std_srvs::srv::Empty>(
-        "stop_motor", std::bind(&RPLidarNode::stop_motor, this, std::placeholders::_1, std::placeholders::_2));
+    m_stop_motor_service =
+        this->create_service<std_srvs::srv::Empty>("stop_motor", std::bind(&RPLidarNode::stop_motor, this, std::placeholders::_1, std::placeholders::_2));
 
-    m_start_motor_service = this->create_service<std_srvs::srv::Empty>(
-        "start_motor", std::bind(&RPLidarNode::start_motor, this, std::placeholders::_1, std::placeholders::_2));
+    m_start_motor_service =
+        this->create_service<std_srvs::srv::Empty>("start_motor", std::bind(&RPLidarNode::start_motor, this, std::placeholders::_1, std::placeholders::_2));
 
     m_timer = this->create_wall_timer(1ms, std::bind(&RPLidarNode::publish_loop, this));
-}
+  }
 
-RPLidarNode::~RPLidarNode()
-{
+  RPLidarNode::~RPLidarNode()
+  {
     m_driver->stop();
     m_driver->stopMotor();
-}
+  }
 
-void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
-{
+  void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
+  {
     static size_t scan_count = 0;
     sensor_msgs::msg::LaserScan scan_msg;
 
@@ -160,14 +159,13 @@ void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& 
     bool reversed = (m_angle_max > m_angle_min);
     if (reversed)
     {
-        /* NOTE(allenh1): the other case seems impossible? */
-        scan_msg.angle_min = M_PI - m_angle_max;
-        scan_msg.angle_max = M_PI - m_angle_min;
-    }
-    else
+      /* NOTE(allenh1): the other case seems impossible? */
+      scan_msg.angle_min = M_PI - m_angle_max;
+      scan_msg.angle_max = M_PI - m_angle_min;
+    } else
     {
-        scan_msg.angle_min = M_PI - m_angle_min;
-        scan_msg.angle_max = M_PI - m_angle_max;
+      scan_msg.angle_min = M_PI - m_angle_min;
+      scan_msg.angle_max = M_PI - m_angle_max;
     }
     scan_msg.angle_increment = (scan_msg.angle_max - scan_msg.angle_min) / (double)(node_count - 1);
 
@@ -181,40 +179,37 @@ void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& 
     bool reverse_data = (!m_inverted && reversed) || (m_inverted && !reversed);
     if (!reverse_data)
     {
-        for (size_t i = 0; i < node_count; i++)
+      for (size_t i = 0; i < node_count; i++)
+      {
+        float read_value = (float)nodes[i].dist_mm_q2 / 4.0f / 1000;
+        if (read_value == 0.0)
         {
-            float read_value = (float)nodes[i].dist_mm_q2 / 4.0f / 1000;
-            if (read_value == 0.0)
-            {
-                scan_msg.ranges[i] = std::numeric_limits<float>::infinity();
-            }
-            else
-            {
-                scan_msg.ranges[i] = read_value;
-            }
-            scan_msg.intensities[i] = (float)(nodes[i].quality >> 2);
+          scan_msg.ranges[i] = std::numeric_limits<float>::infinity();
+        } else
+        {
+          scan_msg.ranges[i] = read_value;
         }
-    }
-    else
+        scan_msg.intensities[i] = (float)(nodes[i].quality >> 2);
+      }
+    } else
     {
-        for (size_t i = 0; i < node_count; i++)
+      for (size_t i = 0; i < node_count; i++)
+      {
+        float read_value = (float)nodes[i].dist_mm_q2 / 4.0f / 1000;
+        if (read_value == 0.0)
         {
-            float read_value = (float)nodes[i].dist_mm_q2 / 4.0f / 1000;
-            if (read_value == 0.0)
-            {
-                scan_msg.ranges[node_count - 1 - i] = std::numeric_limits<float>::infinity();
-            }
-            else
-            {
-                scan_msg.ranges[node_count - 1 - i] = read_value;
-            }
-            scan_msg.intensities[node_count - 1 - i] = (float)(nodes[i].quality >> 2);
+          scan_msg.ranges[node_count - 1 - i] = std::numeric_limits<float>::infinity();
+        } else
+        {
+          scan_msg.ranges[node_count - 1 - i] = read_value;
         }
+        scan_msg.intensities[node_count - 1 - i] = (float)(nodes[i].quality >> 2);
+      }
     }
 
     if (raw_enabled_)
     {
-        m_publisher_raw->publish(scan_msg);
+      m_publisher_raw->publish(scan_msg);
     }
 
     /* Scan filtering//{*/
@@ -223,52 +218,51 @@ void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& 
     // filtering -> change single appearing points to m_max_distance + 10
     if (filter_enabled_)
     {
-        for (int i = 0; i < (int)scan_msg.ranges.size(); i++)
+      for (int i = 0; i < (int)scan_msg.ranges.size(); i++)
+      {
+        // Remove close points
+        if (scan_msg.ranges[i] < filter_min_range_)
         {
-            //Remove close points
-            if (scan_msg.ranges[i] < filter_min_range_)
-            {
-                filtered_scan_msg.ranges[i] = m_max_distance + 10;
-            }
-
-            //Check points only until specific distance
-            if (scan_msg.ranges[i] < filter_check_distance_)
-            {
-                int close_samples = 0;
-                for (int it = -filter_scan_search_area_ / 2; it <= filter_scan_search_area_ / 2; it++)
-                {
-                    int tmpindex = i + it;
-
-                    if (tmpindex >= (int)scan_msg.ranges.size())
-                    {
-                        tmpindex -= scan_msg.ranges.size();
-                    }
-
-                    if (tmpindex < 0)
-                    {
-                        tmpindex += scan_msg.ranges.size();
-                    }
-
-                    if (fabs(scan_msg.ranges[i] - scan_msg.ranges[tmpindex]) <
-                        filter_minimal_distance_for_acceptance_samples_)
-                    {
-                        close_samples++;
-                    }
-                }
-                if (close_samples < filter_minimal_number_of_close_samples_)
-                {
-                    filtered_scan_msg.ranges[i] = m_max_distance + 10;
-                }
-            }
+          filtered_scan_msg.ranges[i] = m_max_distance + 10;
         }
-        m_publisher_filtered->publish(filtered_scan_msg);
+
+        // Check points only until specific distance
+        if (scan_msg.ranges[i] < filter_check_distance_)
+        {
+          int close_samples = 0;
+          for (int it = -filter_scan_search_area_ / 2; it <= filter_scan_search_area_ / 2; it++)
+          {
+            int tmpindex = i + it;
+
+            if (tmpindex >= (int)scan_msg.ranges.size())
+            {
+              tmpindex -= scan_msg.ranges.size();
+            }
+
+            if (tmpindex < 0)
+            {
+              tmpindex += scan_msg.ranges.size();
+            }
+
+            if (fabs(scan_msg.ranges[i] - scan_msg.ranges[tmpindex]) < filter_minimal_distance_for_acceptance_samples_)
+            {
+              close_samples++;
+            }
+          }
+          if (close_samples < filter_minimal_number_of_close_samples_)
+          {
+            filtered_scan_msg.ranges[i] = m_max_distance + 10;
+          }
+        }
+      }
+      m_publisher_filtered->publish(filtered_scan_msg);
     }
 
     /*//}*/
-}
+  }
 
-bool RPLidarNode::print_device_info() const
-{
+  bool RPLidarNode::print_device_info() const
+  {
     const auto& logger = this->get_logger();
 
     u_result op_result;
@@ -277,15 +271,14 @@ bool RPLidarNode::print_device_info() const
     op_result = m_driver->getDeviceInfo(devinfo);
     if (IS_FAIL(op_result))
     {
-        if (op_result == RESULT_OPERATION_TIMEOUT)
-        {
-            RCLCPP_ERROR(logger, "Operation time out!");
-        }
-        else
-        {
-            RCLCPP_ERROR(logger, "Error code: '%x'", op_result);
-        }
-        return false;
+      if (op_result == RESULT_OPERATION_TIMEOUT)
+      {
+        RCLCPP_ERROR(logger, "Operation time out!");
+      } else
+      {
+        RCLCPP_ERROR(logger, "Error code: '%x'", op_result);
+      }
+      return false;
     }
 
     constexpr size_t SERIAL_NUMBER_SIZE{16};
@@ -294,67 +287,67 @@ bool RPLidarNode::print_device_info() const
     serial_no << std::hex << std::uppercase;
     for (size_t index = 0; index < SERIAL_NUMBER_SIZE; ++index)
     {
-        serial_no << static_cast<uint16_t>(devinfo.serialnum[index]);
+      serial_no << static_cast<uint16_t>(devinfo.serialnum[index]);
     }
 
     struct firmware_version
     {
-        uint8_t minor : 8;
-        uint8_t major : 8;
+      uint8_t minor : 8;
+      uint8_t major : 8;
     } version{*reinterpret_cast<firmware_version*>(&devinfo.firmware_version)};
 
     RCLCPP_INFO(logger, "RPLIDAR S/N: %s", serial_no.str().c_str());
     RCLCPP_INFO(logger, "Firmware Ver: %d.%02d", version.major, version.minor);
     RCLCPP_INFO(logger, "Hardware Rev: %d", static_cast<uint16_t>(devinfo.hardware_version));
     return true;
-}
+  }
 
-bool RPLidarNode::is_healthy() const
-{
+  bool RPLidarNode::is_healthy() const
+  {
     rplidar_response_device_health_t healthinfo;
     u_result op_result = m_driver->getHealth(healthinfo);
 
     const auto& logger = this->get_logger();
     if (IS_OK(op_result))
     {
-        RCLCPP_INFO(logger, "RPLidar health status : '%d'", healthinfo.status);
-        if (healthinfo.status == RPLIDAR_STATUS_ERROR)
-        {
-            RCLCPP_ERROR(logger, "RPLidar internal error detected. Please reboot the device to retry");
-            return false;
-        }
-        return true;
+      RCLCPP_INFO(logger, "RPLidar health status : '%d'", healthinfo.status);
+      if (healthinfo.status == RPLIDAR_STATUS_ERROR)
+      {
+        RCLCPP_ERROR(logger, "RPLidar internal error detected. Please reboot the device to retry");
+        return false;
+      }
+      return true;
     }
     RCLCPP_ERROR(logger, "Cannot retrieve rplidar health code: '%x'", op_result);
     return false;
-}
+  }
 
-void RPLidarNode::stop_motor(const EmptyRequest, EmptyResponse)
-{
+  void RPLidarNode::stop_motor(const EmptyRequest, EmptyResponse)
+  {
     if (m_driver == nullptr)
     {
-        return;
+      return;
     }
 
     RCLCPP_DEBUG(this->get_logger(), "Call to '%s'", __FUNCTION__);
     m_driver->stop();
     m_driver->stopMotor();
-}
+  }
 
-void RPLidarNode::start_motor(const EmptyRequest, EmptyResponse)
-{
+  void RPLidarNode::start_motor(const EmptyRequest, EmptyResponse)
+  {
     if (m_driver == nullptr)
     {
-        return;
+      return;
     }
 
     RCLCPP_DEBUG(this->get_logger(), "Call to '%s'", __FUNCTION__);
     m_driver->startMotor();
     m_driver->startScan(0, 1);
-}
+  }
 
-bool RPLidarNode::set_scan_mode()
-{
+  bool RPLidarNode::set_scan_mode()
+  {
     const auto& logger = this->get_logger();
 
     u_result options_results{};
@@ -365,52 +358,41 @@ bool RPLidarNode::set_scan_mode()
 
     if (m_scan_mode.empty())
     {
-        options_results = m_driver->startScan(force_scan, typical_scan_mode, scan_options, &current_scan_mode);
-    }
-    else
+      options_results = m_driver->startScan(force_scan, typical_scan_mode, scan_options, &current_scan_mode);
+    } else
     {
-        std::vector<RPLidarScanMode> supported_scan_modes;
-        options_results = m_driver->getAllSupportedScanModes(supported_scan_modes);
+      std::vector<RPLidarScanMode> supported_scan_modes;
+      options_results = m_driver->getAllSupportedScanModes(supported_scan_modes);
 
-        if (IS_OK(options_results))
+      if (IS_OK(options_results))
+      {
+        auto found_scan_mode = std::find_if(supported_scan_modes.begin(), supported_scan_modes.end(),
+                                            [this](auto scan_mode) { return std::string_view(scan_mode.scan_mode) == m_scan_mode; });
+
+        if (found_scan_mode == supported_scan_modes.end())
         {
-            auto found_scan_mode =
-                std::find_if(supported_scan_modes.begin(), supported_scan_modes.end(), [this](auto scan_mode) {
-                    return std::string_view(scan_mode.scan_mode) == m_scan_mode;
-                });
+          RCLCPP_ERROR(logger, "scan mode `%s' is not supported by lidar, supported modes ('%zd'):", m_scan_mode.c_str(), supported_scan_modes.size());
 
-            if (found_scan_mode == supported_scan_modes.end())
-            {
-                RCLCPP_ERROR(logger,
-                             "scan mode `%s' is not supported by lidar, supported modes ('%zd'):",
-                             m_scan_mode.c_str(),
-                             supported_scan_modes.size());
+          for (const auto& scan_mode : supported_scan_modes)
+          {
+            RCLCPP_ERROR(logger, "%s: max_distance: %.1f m, Point number: %.1fK", scan_mode.scan_mode, scan_mode.max_distance,
+                         (1000 / scan_mode.us_per_sample));
+          }
 
-                for (const auto& scan_mode : supported_scan_modes)
-                {
-                    RCLCPP_ERROR(logger,
-                                 "%s: max_distance: %.1f m, Point number: %.1fK",
-                                 scan_mode.scan_mode,
-                                 scan_mode.max_distance,
-                                 (1000 / scan_mode.us_per_sample));
-                }
-
-                options_results = RESULT_OPERATION_FAIL;
-                return false;
-            }
-            else
-            {
-                options_results =
-                    m_driver->startScanExpress(force_scan, found_scan_mode->id, scan_options, &current_scan_mode);
-            }
+          options_results = RESULT_OPERATION_FAIL;
+          return false;
+        } else
+        {
+          options_results = m_driver->startScanExpress(force_scan, found_scan_mode->id, scan_options, &current_scan_mode);
         }
+      }
     }
 
     /* verify we set the scan mode */
     if (!IS_OK(options_results))
     {
-        RCLCPP_ERROR(logger, "Cannot start scan: '%08x'", options_results);
-        return false;
+      RCLCPP_ERROR(logger, "Cannot start scan: '%08x'", options_results);
+      return false;
     }
 
     const float samples_per_microsecond = 1 / current_scan_mode.us_per_sample;
@@ -418,21 +400,17 @@ bool RPLidarNode::set_scan_mode()
     const float samples_per_rotation = samples_per_second / DEFAULT_FREQUENCY;  // Each rotation is 1000 ms
     const float samples_per_degree = samples_per_rotation / 360.0f;
 
-    m_angle_compensate_multiple = samples_per_degree;  // minimum viable theoretical samples per degrees rotated
+    m_angle_compensate_multiple = samples_per_degree;                           // minimum viable theoretical samples per degrees rotated
     m_angle_compensate_multiple = std::max(m_angle_compensate_multiple, 1.0f);  // minimum of 1 sample per degree
     m_max_distance = current_scan_mode.max_distance;
 
-    RCLCPP_INFO(logger,
-                "current scan mode: %s, max_distance: %.1f m, Point number: %.1fK , angle_compensate: %.1f",
-                current_scan_mode.scan_mode,
-                current_scan_mode.max_distance,
-                (1000 / current_scan_mode.us_per_sample),
-                m_angle_compensate_multiple);
+    RCLCPP_INFO(logger, "current scan mode: %s, max_distance: %.1f m, Point number: %.1fK , angle_compensate: %.1f", current_scan_mode.scan_mode,
+                current_scan_mode.max_distance, (1000 / current_scan_mode.us_per_sample), m_angle_compensate_multiple);
     return true;
-}
+  }
 
-void RPLidarNode::publish_loop()
-{
+  void RPLidarNode::publish_loop()
+  {
     const auto& logger = this->get_logger();
     ResponseNodeArray sample_nodes{};
 
@@ -443,7 +421,7 @@ void RPLidarNode::publish_loop()
 
     if (op_result != RESULT_OK)
     {
-        return;
+      return;
     }
 
     op_result = m_driver->ascendScanData(&sample_nodes[0], sample_count);
@@ -453,58 +431,56 @@ void RPLidarNode::publish_loop()
 
     if (op_result == RESULT_OK)
     {
-        constexpr auto is_valid_node = [](const auto& node) -> bool { return node.dist_mm_q2 != 0; };
+      constexpr auto is_valid_node = [](const auto& node) -> bool { return node.dist_mm_q2 != 0; };
 
-        const auto end_node = std::find_if(sample_nodes.rbegin(), sample_nodes.rend(), is_valid_node);
-        const auto start_node = std::find_if(sample_nodes.begin(), sample_nodes.end(), is_valid_node);
+      const auto end_node = std::find_if(sample_nodes.rbegin(), sample_nodes.rend(), is_valid_node);
+      const auto start_node = std::find_if(sample_nodes.begin(), sample_nodes.end(), is_valid_node);
 
-        m_angle_min = degreesToRadians(getAngleInDegrees(*start_node));
-        m_angle_max = degreesToRadians(getAngleInDegrees(*end_node));
+      m_angle_min = degreesToRadians(getAngleInDegrees(*start_node));
+      m_angle_max = degreesToRadians(getAngleInDegrees(*end_node));
 
+      /**
+       * turn this -> [0, 0, 0, 1, 2, 3, 0, 0]
+       * into this -> [1, 2, 3, 0, 0, 0, 0, 0]
+       */
+      std::rotate(sample_nodes.begin(), start_node, end_node.base());
+      const size_t nodes_count = end_node.base() - start_node + 1;
+
+      if (m_angle_compensate)
+      {
         /**
-         * turn this -> [0, 0, 0, 1, 2, 3, 0, 0]
-         * into this -> [1, 2, 3, 0, 0, 0, 0, 0]
+         * Output a fixed number of lidar points and map them to the closest angle possible
+         * RPlidar by default will output a variable number of samples around a fixed sample
+         * Example:
+         * Number of nodes -> 535 - 543 (not consistent)
+         * Number of compensation nodes-> 525 (a nice fixed number of samples)
+         *
+         * We want 525 of the 543, that are evenly distributed
+         * Our delta then will be 543/525 = 1.03
          */
-        std::rotate(sample_nodes.begin(), start_node, end_node.base());
-        const size_t nodes_count = end_node.base() - start_node + 1;
+        const size_t angle_compensate_nodes_count = 360 * m_angle_compensate_multiple;
+        ResponseNodeArray angle_compensate_nodes{};
 
-        if (m_angle_compensate)
+        float angle_compensation_position = 0;
+        float angle_compensation_delta = static_cast<double>(nodes_count) / angle_compensate_nodes_count;
+        for (size_t index = 0; index < angle_compensate_nodes_count; ++index)
         {
-            /**
-             * Output a fixed number of lidar points and map them to the closest angle possible
-             * RPlidar by default will output a variable number of samples around a fixed sample
-             * Example:
-             * Number of nodes -> 535 - 543 (not consistent)
-             * Number of compensation nodes-> 525 (a nice fixed number of samples)
-             *
-             * We want 525 of the 543, that are evenly distributed
-             * Our delta then will be 543/525 = 1.03
-             */
-            const size_t angle_compensate_nodes_count = 360 * m_angle_compensate_multiple;
-            ResponseNodeArray angle_compensate_nodes{};
-
-            float angle_compensation_position = 0;
-            float angle_compensation_delta = static_cast<double>(nodes_count) / angle_compensate_nodes_count;
-            for (size_t index = 0; index < angle_compensate_nodes_count; ++index)
-            {
-                angle_compensate_nodes[index] = sample_nodes[static_cast<size_t>(angle_compensation_position)];
-                RCLCPP_DEBUG(logger, "%f", getAngleInDegrees(angle_compensate_nodes[index]));
-                angle_compensation_position += angle_compensation_delta;
-            }
-
-            publish_scan(scan_duration, angle_compensate_nodes, angle_compensate_nodes_count);
+          angle_compensate_nodes[index] = sample_nodes[static_cast<size_t>(angle_compensation_position)];
+          RCLCPP_DEBUG(logger, "%f", getAngleInDegrees(angle_compensate_nodes[index]));
+          angle_compensation_position += angle_compensation_delta;
         }
-        else
-        {
-            publish_scan(scan_duration, sample_nodes, nodes_count);
-        }
-    }
-    else if (op_result == RESULT_OPERATION_FAIL)
+
+        publish_scan(scan_duration, angle_compensate_nodes, angle_compensate_nodes_count);
+      } else
+      {
+        publish_scan(scan_duration, sample_nodes, nodes_count);
+      }
+    } else if (op_result == RESULT_OPERATION_FAIL)
     {
-        RCLCPP_WARN(logger, "Failed to organize data in ascending format. Publishing invalid dat anyways.");
-        publish_scan(scan_duration, sample_nodes, sample_count);
+      RCLCPP_WARN(logger, "Failed to organize data in ascending format. Publishing invalid dat anyways.");
+      publish_scan(scan_duration, sample_nodes, sample_count);
     }
-}
+  }
 
 }  // namespace rplidar_ros
 
