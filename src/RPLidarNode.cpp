@@ -95,6 +95,7 @@ namespace rplidar_ros
         error_string << "Cannot bind to the specified TCP host: " << m_tcp_ip << ":" << m_tcp_port;
         throw std::runtime_error(error_string.str());
       }
+
     } else
     {
       // make connection...
@@ -126,7 +127,7 @@ namespace rplidar_ros
       throw std::runtime_error("Failed to set the scan mode.");
     }
 
-    /* Publishers */
+<<<<<<< HEAD
     rclcpp::QoS qos(rclcpp::KeepLast(3));
     m_publisher_filtered = this->create_publisher<LaserScan>(m_scan_topic_filtered, qos);
     m_publisher_raw = this->create_publisher<LaserScan>(m_scan_topic_raw, qos);
@@ -471,10 +472,12 @@ namespace rplidar_ros
         }
 
         publish_scan(scan_duration, angle_compensate_nodes, angle_compensate_nodes_count);
+
       } else
       {
         publish_scan(scan_duration, sample_nodes, nodes_count);
       }
+
     } else if (op_result == RESULT_OPERATION_FAIL)
     {
       RCLCPP_WARN(logger, "Failed to organize data in ascending format. Publishing invalid dat anyways.");
