@@ -1,3 +1,4 @@
+// clang: MatousFormat
 /*
  *  RPLIDAR ROS NODE
  *
@@ -46,97 +47,99 @@
 #include <std_srvs/srv/empty.hpp>
 #include <visibility.h>
 
-namespace {
-constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
-constexpr float DEFAULT_FREQUENCY = 10.0; // hz
-
-using LaserScan = sensor_msgs::msg::LaserScan;
-using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
-using StartMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
-using StopMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
-using RPLidarDriver = rp::standalone::rplidar::RPlidarDriver;
-using RPLidarScanMode = rp::standalone::rplidar::RplidarScanMode;
-using Clock = rclcpp::Clock::SharedPtr;
-using ResponseNodeArray = std::array<rplidar_response_measurement_node_hq_t, MAX_SAMPLE_COUNT>;
-using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
-using EmptyResponse = std::shared_ptr<std_srvs::srv::Empty::Response>;
-using Timer = rclcpp::TimerBase::SharedPtr;
-using namespace std::chrono_literals;
-} // namespace
-
-namespace rplidar_ros {
-[[nodiscard]] constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
+namespace
 {
-   return node.angle_z_q14 * 90.f / 16384.f; // I have no clue what these values mean
-}
+  constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
+  constexpr float DEFAULT_FREQUENCY = 10.0;  // hz
 
-[[nodiscard]] constexpr float degreesToRadians(float degrees)
+  using LaserScan = sensor_msgs::msg::LaserScan;
+  using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
+  using StartMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
+  using StopMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
+  using RPLidarDriver = rp::standalone::rplidar::RPlidarDriver;
+  using RPLidarScanMode = rp::standalone::rplidar::RplidarScanMode;
+  using Clock = rclcpp::Clock::SharedPtr;
+  using ResponseNodeArray = std::array<rplidar_response_measurement_node_hq_t, MAX_SAMPLE_COUNT>;
+  using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
+  using EmptyResponse = std::shared_ptr<std_srvs::srv::Empty::Response>;
+  using Timer = rclcpp::TimerBase::SharedPtr;
+  using namespace std::chrono_literals;
+}  // namespace
+
+namespace rplidar_ros
 {
-   return degrees * M_PI / 180.0;
-}
+  [[nodiscard]] constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
+  {
+    return node.angle_z_q14 * 90.f / 16384.f;  // I have no clue what these values mean
+  }
 
-class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
-{
- public:
-   explicit RPLidarNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
-   virtual ~RPLidarNode();
+  [[nodiscard]] constexpr float degreesToRadians(float degrees)
+  {
+    return degrees * M_PI / 180.0;
+  }
 
-   void publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count);
+  class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
+  {
+  public:
+    explicit RPLidarNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+    virtual ~RPLidarNode();
 
-   /* service callbacks */
-   void stop_motor(const EmptyRequest req, EmptyResponse res);
-   void start_motor(const EmptyRequest req, EmptyResponse res);
+    void publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count);
 
- private:
-   struct RPLidarDriverDeleter
-   {
+    /* service callbacks */
+    void stop_motor(const EmptyRequest req, EmptyResponse res);
+    void start_motor(const EmptyRequest req, EmptyResponse res);
+
+  private:
+    struct RPLidarDriverDeleter
+    {
       void operator()(RPLidarDriver* driver)
       {
-         RPLidarDriver::DisposeDriver(driver);
+        RPLidarDriver::DisposeDriver(driver);
       }
-   };
+    };
 
-   using RPLidarDriverUPtr = std::unique_ptr<RPLidarDriver, RPLidarDriverDeleter>;
+    using RPLidarDriverUPtr = std::unique_ptr<RPLidarDriver, RPLidarDriverDeleter>;
 
-   [[nodiscard]] bool print_device_info() const;
-   [[nodiscard]] bool is_healthy() const;
-   [[nodiscard]] bool set_scan_mode();
-   void publish_loop();
+    [[nodiscard]] bool print_device_info() const;
+    [[nodiscard]] bool is_healthy() const;
+    [[nodiscard]] bool set_scan_mode();
+    void publish_loop();
 
-   /* parameters */
-   std::string m_channel_type;
-   std::string m_tcp_ip;
-   std::string m_serial_port;
-   std::string m_scan_topic;
-   int m_tcp_port;
-   int m_serial_baudrate;
-   std::string m_frame_id;
-   bool m_inverted;
-   bool m_angle_compensate;
-   float m_angle_compensate_multiple;
-   std::string m_scan_mode;
+    /* parameters */
+    std::string m_channel_type;
+    std::string m_tcp_ip;
+    std::string m_serial_port;
+    std::string m_scan_topic;
+    int m_tcp_port;
+    int m_serial_baudrate;
+    std::string m_frame_id;
+    bool m_inverted;
+    bool m_angle_compensate;
+    float m_angle_compensate_multiple;
+    std::string m_scan_mode;
 
-   /* Publisher */
-   LaserScanPub m_publisher;
+    /* Publisher */
+    LaserScanPub m_publisher;
 
-   /* Services */
-   StopMotorService m_stop_motor_service;
-   StartMotorService m_start_motor_service;
+    /* Services */
+    StopMotorService m_stop_motor_service;
+    StartMotorService m_start_motor_service;
 
-   /* SDK Pointer */
-   RPLidarDriverUPtr m_driver{nullptr};
+    /* SDK Pointer */
+    RPLidarDriverUPtr m_driver{nullptr};
 
-   /* Timer */
-   Timer m_timer;
+    /* Timer */
+    Timer m_timer;
 
-   /* Scan Times */
-   size_t m_scan_count{0};
-   float m_min_distance{0.15f};
-   float m_max_distance{8.0};
-   float m_angle_min{degreesToRadians(0)};
-   float m_angle_max{degreesToRadians(359)};
-};
+    /* Scan Times */
+    size_t m_scan_count{0};
+    float m_min_distance{0.15f};
+    float m_max_distance{8.0};
+    float m_angle_min{degreesToRadians(0)};
+    float m_angle_max{degreesToRadians(359)};
+  };
 
-} // namespace rplidar_ros
+}  // namespace rplidar_ros
 
-#endif // RPLIDAR_NODE_HPP_
+#endif  // RPLIDAR_NODE_HPP_
