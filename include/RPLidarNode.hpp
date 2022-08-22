@@ -1,3 +1,4 @@
+// clang: MatousFormat
 /*
  *  RPLIDAR ROS NODE
  *
@@ -48,37 +49,37 @@
 
 namespace
 {
-constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
-constexpr float DEFAULT_FREQUENCY = 10.0;  // hz
+  constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
+  constexpr float DEFAULT_FREQUENCY = 10.0;  // hz
 
-using LaserScan = sensor_msgs::msg::LaserScan;
-using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
-using StartMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
-using StopMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
-using RPLidarDriver = rp::standalone::rplidar::RPlidarDriver;
-using RPLidarScanMode = rp::standalone::rplidar::RplidarScanMode;
-using Clock = rclcpp::Clock::SharedPtr;
-using ResponseNodeArray = std::array<rplidar_response_measurement_node_hq_t, MAX_SAMPLE_COUNT>;
-using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
-using EmptyResponse = std::shared_ptr<std_srvs::srv::Empty::Response>;
-using Timer = rclcpp::TimerBase::SharedPtr;
-using namespace std::chrono_literals;
+  using LaserScan = sensor_msgs::msg::LaserScan;
+  using LaserScanPub = rclcpp::Publisher<LaserScan>::SharedPtr;
+  using StartMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
+  using StopMotorService = rclcpp::Service<std_srvs::srv::Empty>::SharedPtr;
+  using RPLidarDriver = rp::standalone::rplidar::RPlidarDriver;
+  using RPLidarScanMode = rp::standalone::rplidar::RplidarScanMode;
+  using Clock = rclcpp::Clock::SharedPtr;
+  using ResponseNodeArray = std::array<rplidar_response_measurement_node_hq_t, MAX_SAMPLE_COUNT>;
+  using EmptyRequest = std::shared_ptr<std_srvs::srv::Empty::Request>;
+  using EmptyResponse = std::shared_ptr<std_srvs::srv::Empty::Response>;
+  using Timer = rclcpp::TimerBase::SharedPtr;
+  using namespace std::chrono_literals;
 }  // namespace
 
 namespace rplidar_ros
 {
-[[nodiscard]] constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
-{
+  [[nodiscard]] constexpr float getAngleInDegrees(const rplidar_response_measurement_node_hq_t& node)
+  {
     return node.angle_z_q14 * 90.f / 16384.f;  // I have no clue what these values mean
-}
+  }
 
-[[nodiscard]] constexpr float degreesToRadians(float degrees)
-{
+  [[nodiscard]] constexpr float degreesToRadians(float degrees)
+  {
     return degrees * M_PI / 180.0;
-}
+  }
 
-class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
-{
+  class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
+  {
   public:
     explicit RPLidarNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
     virtual ~RPLidarNode();
@@ -92,7 +93,10 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
   private:
     struct RPLidarDriverDeleter
     {
-        void operator()(RPLidarDriver* driver) { RPLidarDriver::DisposeDriver(driver); }
+      void operator()(RPLidarDriver* driver)
+      {
+        RPLidarDriver::DisposeDriver(driver);
+      }
     };
 
     using RPLidarDriverUPtr = std::unique_ptr<RPLidarDriver, RPLidarDriverDeleter>;
@@ -145,7 +149,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
     float m_max_distance{8.0};
     float m_angle_min{degreesToRadians(0)};
     float m_angle_max{degreesToRadians(359)};
-};
+  };
 
 }  // namespace rplidar_ros
 
