@@ -127,7 +127,6 @@ namespace rplidar_ros
       throw std::runtime_error("Failed to set the scan mode.");
     }
 
-<<<<<<< HEAD
     rclcpp::QoS qos(rclcpp::KeepLast(3));
     m_publisher_filtered = this->create_publisher<LaserScan>(m_scan_topic_filtered, qos);
     m_publisher_raw = this->create_publisher<LaserScan>(m_scan_topic_raw, qos);
