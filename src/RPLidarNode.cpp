@@ -41,6 +41,8 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
 {
    const auto& logger = this->get_logger();
 
+   RCLCPP_INFO(get_logger(), "-------------- Loading parameters --------------");
+
    /* set parameters */
    m_channel_type = this->declare_parameter("channel_type", "serial");
    m_tcp_ip = this->declare_parameter("tcp_ip", "192.168.0.7");
@@ -51,7 +53,13 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    m_inverted = this->declare_parameter("inverted", false);
    m_angle_compensate = this->declare_parameter("angle_compensate", false);
    m_scan_mode = this->declare_parameter("scan_mode", std::string());
-   m_scan_topic = this->declare_parameter("topic_name", std::string("scan"));
+   m_raw_enabled = this->declare_parameter("raw_enabled", true);
+   m_filter_enabled = this->declare_parameter("filter.enabled", true);
+   m_filter_min_range = this->declare_parameter("filter.min_range", 0.3);
+   m_filter_check_distance = this->declare_parameter("filter.check_disance", 10.0);
+   m_filter_scan_search_area = this->declare_parameter("filter.scan_search_area", 15);
+   m_filter_minimal_number_of_close_samples = this->declare_parameter("filter.minimal_number_of_close_samples", 8);
+   m_filter_minimal_distance_for_acceptance_samples = this->declare_parameter("filter.minimal_distance_for_acceptance_samples", 0.1);
 
    RCLCPP_INFO(logger, "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
 
@@ -102,7 +110,8 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
       throw std::runtime_error("Failed to set the scan mode.");
    }
 
-   m_publisher = this->create_publisher<LaserScan>(m_scan_topic, rclcpp::SystemDefaultsQoS());
+   m_publisher_filtered = this->create_publisher<sensor_msgs::msg::LaserScan>("topic_filtered_out", rclcpp::SensorDataQoS());
+   m_publisher_raw = this->create_publisher<sensor_msgs::msg::LaserScan>("topic_raw_out", rclcpp::SensorDataQoS());
 
    m_stop_motor_service = this->create_service<std_srvs::srv::Empty>(
       "stop_motor", std::bind(&RPLidarNode::stop_motor, this, std::placeholders::_1, std::placeholders::_2));
@@ -170,7 +179,45 @@ void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& 
       }
    }
 
-   m_publisher->publish(scan_msg);
+   if (m_raw_enabled){
+     m_publisher_raw->publish(scan_msg);
+   }
+
+   sensor_msgs::msg::LaserScan filtered_scan_msg = scan_msg;
+
+   // filtering -> change single appearing points to m_max_distance + 10
+   if (m_filter_enabled){
+     for (int i = 0; i < (int)scan_msg.ranges.size(); i++){
+       // Remove close points
+       if (scan_msg.ranges[i] < m_filter_min_range){
+         filtered_scan_msg.ranges[i] = m_max_distance + 10;
+       }
+
+       // Check points only until specific distance
+       if (scan_msg.ranges[i] < m_filter_check_distance){
+         int close_samples = 0;
+         for (int it = -m_filter_scan_search_area / 2; it <= m_filter_scan_search_area / 2; it++){
+           int tmpindex = i + it;
+
+           if (tmpindex >= (int)scan_msg.ranges.size()){
+             tmpindex -= scan_msg.ranges.size();
+           }
+
+           if (tmpindex < 0){
+             tmpindex += scan_msg.ranges.size();
+           }
+
+           if (fabs(scan_msg.ranges[i] - scan_msg.ranges[tmpindex]) < m_filter_minimal_distance_for_acceptance_samples){
+             close_samples++;
+           }
+         }
+         if (close_samples < m_filter_minimal_number_of_close_samples){
+           filtered_scan_msg.ranges[i] = m_max_distance + 10;
+         }
+       }
+     }
+     m_publisher_filtered->publish(filtered_scan_msg);
+   }
 }
 
 bool RPLidarNode::print_device_info() const

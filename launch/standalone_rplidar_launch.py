@@ -9,10 +9,15 @@ def generate_launch_description():
             name='rplidar',
             package='rplidar_ros2',
             executable='rplidar',
-            output='screen',
+            remappings=[
+                # publishers
+                ('topic_filtered_out', '~/scan_filtered'),
+                ('topic_raw_out', '~/scan'),
+            ],
             parameters=[
                 path.join(get_package_share_directory('rplidar_ros2'), 'config',
-                          'rplidar_a3.yaml'),
+                          'params.yaml'),
             ],
+            output='screen',
         ),
     ])
