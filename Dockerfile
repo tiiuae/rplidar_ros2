@@ -12,9 +12,10 @@ RUN /packaging/build.sh
 
 FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-3dcb78d
 
-ENTRYPOINT /entrypoint.sh
-
-COPY entrypoint.sh /entrypoint.sh
+# launch file checks env variables SIMULATION and DRONE_TYPE
+# SIMULATION is by default 0. However, it can be set to 1
+# DRONE_TYPE is by default T-DRONE. However, it can be set to HOLYBRO
+ENTRYPOINT exec ros-with-env ros2 launch rplidar_ros2 sensors_launch.py
 
 COPY --from=builder /main_ws/ros-*-rplidar-ros2_*_amd64.deb /rplidar.deb
 
