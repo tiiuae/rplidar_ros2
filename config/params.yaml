@@ -20,7 +20,7 @@
     scan_mode: "Stability"
 
     filter:
-      enabled: false #Enable/Disable filtering and publisher
+      enabled: true #Enable/Disable filtering and publisher
       min_range: 0.3
       check_distance: 10.0
       scan_search_area: 15
