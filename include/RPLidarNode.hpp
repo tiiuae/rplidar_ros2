@@ -115,9 +115,19 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    bool m_angle_compensate;
    float m_angle_compensate_multiple;
    std::string m_scan_mode;
+   bool m_raw_enabled;
+
+   /* Filtering */
+   bool m_filter_enabled;
+   double m_filter_min_range;
+   double m_filter_check_distance;
+   int m_filter_scan_search_area;
+   int m_filter_minimal_number_of_close_samples;
+   double m_filter_minimal_distance_for_acceptance_samples;
 
    /* Publisher */
-   LaserScanPub m_publisher;
+   LaserScanPub m_publisher_filtered;
+   LaserScanPub m_publisher_raw;
 
    /* Services */
    StopMotorService m_stop_motor_service;
