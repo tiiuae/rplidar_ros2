@@ -29,8 +29,15 @@ def generate_launch_description():
     simulation_mode = (SIMULATION == "1")
 
     # DRONE_AIRFRAME = <t-drone | holybro>
+    is_robot_holybro_type = False
     DRONE_AIRFRAME = os.getenv('DRONE_AIRFRAME')
-    is_robot_holybro_type = (DRONE_AIRFRAME == "holybro")
+    if DRONE_AIRFRAME == "holybro":
+        is_robot_holybro_type = True
+    elif DRONE_AIRFRAME == "" or DRONE_AIRFRAME == "t-drone":
+        is_robot_holybro_type = False
+    else:
+        print('ERROR: not valid DRONE_AIRFRAME.')
+        sys.exit(1)
 
     # Namespace declarations
     namespace = DRONE_DEVICE_ID
