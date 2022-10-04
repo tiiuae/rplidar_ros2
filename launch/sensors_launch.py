@@ -28,8 +28,9 @@ def generate_launch_description():
     SIMULATION = os.getenv('SIMULATION')
     simulation_mode = (SIMULATION == "1")
 
-    DRONE_TYPE = os.getenv('DRONE_TYPE')
-    is_robot_holybro_type = (DRONE_TYPE == "HOLYBRO")
+    # DRONE_AIRFRAME = <t-drone | holybro>
+    DRONE_AIRFRAME = os.getenv('DRONE_AIRFRAME')
+    is_robot_holybro_type = (DRONE_AIRFRAME == "holybro")
 
     # Namespace declarations
     namespace = DRONE_DEVICE_ID
