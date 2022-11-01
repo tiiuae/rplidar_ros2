@@ -67,6 +67,7 @@ def generate_launch_description():
             parameters = [
                 pkg_share_path + '/config/params.yaml',
                 {"frame_id": rplidar_frame},
+                {"use_sim_time": True},
             ],
             output = 'screen',
         ),

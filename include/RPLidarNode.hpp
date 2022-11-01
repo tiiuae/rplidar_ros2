@@ -116,6 +116,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    float m_angle_compensate_multiple;
    std::string m_scan_mode;
    bool m_raw_enabled;
+   bool m_legacy_mode;
 
    /* Filtering */
    bool m_filter_enabled;
