@@ -25,5 +25,5 @@
       min_range: 0.3
       check_distance: 10.0
       scan_search_area: 15
-      minimal_number_of_close_samples: 2
+      minimal_number_of_close_samples: 3
       minimal_distance_for_acceptance_samples: 0.1
