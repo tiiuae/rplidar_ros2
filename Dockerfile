@@ -15,8 +15,9 @@ FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-3dcb78d
 # launch file checks env variables SIMULATION and DRONE_AIRFRAME
 # SIMULATION is by default 0. However, it can be set to 1
 # DRONE_AIRFRAME is by default "t-drone". However, it can be set to "holybro"
-ENTRYPOINT exec ros-with-env ros2 launch rplidar_ros2 sensors_launch.py
+ENTRYPOINT /entrypoint.sh
 
+COPY entrypoint.sh /entrypoint.sh
 COPY --from=builder /main_ws/ros-*-rplidar-ros2_*_amd64.deb /rplidar.deb
 
 # need update because ROS people have a habit of removing old packages pretty fast
