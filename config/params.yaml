@@ -10,9 +10,10 @@
     serial_port: "/dev/rplidar"
 
     raw_enabled: true # Enable/Disable raw scan publish
+    legacy_mode: false # legacy mode cuts off rays at the beginning and end of the scan msg if the values are inf
 
     inverted: false
-    angle_compensate: true
+    angle_compensate: false
 
     # Sensitivity: optimized for longer ranger, better sensitivity but weak environment elimination - indoor environment
     # Boost: optimized for sample rate
@@ -24,5 +25,5 @@
       min_range: 0.3
       check_distance: 10.0
       scan_search_area: 15
-      minimal_number_of_close_samples: 8
+      minimal_number_of_close_samples: 3
       minimal_distance_for_acceptance_samples: 0.1
