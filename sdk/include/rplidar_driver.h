@@ -33,7 +33,7 @@
  */
 
 #pragma once
-
+#include <cstddef>
 
 #ifndef __cplusplus
 #error "The RPlidar SDK requires a C++ compiler to be built"
