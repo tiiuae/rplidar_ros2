@@ -1,4 +1,4 @@
-FROM ghcr.io/tiiuae/fog-ros-baseimage:builder-3dcb78d AS builder
+FROM ghcr.io/tiiuae/fog-ros-baseimage-builder:dp-4266_humble_upgrade AS builder
 
 COPY . /main_ws/src/
 
@@ -10,7 +10,7 @@ RUN /packaging/build.sh
 #  ▲               runtime ──┐
 #  └── build                 ▼
 
-FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-3dcb78d
+FROM ghcr.io/tiiuae/fog-ros-baseimage:dp-4266_humble_upgrade
 
 # launch file checks env variables SIMULATION and DRONE_AIRFRAME
 # SIMULATION is by default 0. However, it can be set to 1
