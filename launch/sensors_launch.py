@@ -39,6 +39,16 @@ def generate_launch_description():
         print('ERROR: not valid DRONE_AIRFRAME.')
         sys.exit(1)
 
+    # By default use raw scan, only if USE_FILTERED_SCAN is set to 1 or True, use filtered 
+    filtered_name = "~/scan_filtered"
+    raw_name = "~/scan"
+
+    USE_FILTERED_SCAN = os.getenv('USE_FILTERED_SCAN')
+    if(USE_FILTERED_SCAN == "1" or USE_FILTERED_SCAN == "True"):
+        filtered_name = "~/scan"
+        raw_name = "~/scan_unfiltered"
+        print('[INFO] RPLIDAR: using filtered scan.')
+
     # Namespace declarations
     namespace = DRONE_DEVICE_ID
 
@@ -60,9 +70,8 @@ def generate_launch_description():
             condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
             remappings=[
-                # publishers
-                ('topic_filtered_out', '~/scan_filtered'),
-                ('topic_raw_out', '~/scan'),
+                ('topic_filtered_out', filtered_name),
+                ('topic_raw_out', raw_name),
             ],
             parameters = [
                 pkg_share_path + '/config/params.yaml',
