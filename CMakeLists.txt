@@ -33,6 +33,7 @@ target_include_directories(rplidar_sdk
 
 find_package(ament_cmake_auto REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
+find_package(prometheus-cpp CONFIG REQUIRED)
 
 # Can't use ament_target_dependencies here, so need to manually
 # create targets for ros2 dependencies
@@ -63,12 +64,12 @@ target_include_directories(rplidar_node PUBLIC include)
 
 # build direct ROS 1 port
 ament_auto_add_executable(rplidar_client src/client.cpp)
-target_link_libraries(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components)
+target_link_libraries(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components prometheus-cpp::pull)
 ament_target_dependencies(rplidar_client rclcpp sensor_msgs std_srvs rclcpp_components)
 
 # build composition node
 ament_auto_add_executable(rplidar src/rplidar.cpp)
-target_link_libraries(rplidar rplidar_node)
+target_link_libraries(rplidar rplidar_node prometheus-cpp::pull)
 
 install(TARGETS rplidar_client rplidar
         DESTINATION lib/${PROJECT_NAME})

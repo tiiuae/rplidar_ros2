@@ -12,6 +12,10 @@ RUN /packaging/build.sh
 
 FROM ghcr.io/tiiuae/fog-ros-baseimage:v2.0.0
 
+HEALTHCHECK --interval=5s \
+	CMD fog-health check --metric=rplidar_scan_count --diff-gte=1.0 \
+		--metrics-from=http://localhost:${METRICS_PORT}/metrics --only-if-nonempty=${METRICS_PORT}
+
 # launch file checks env variables SIMULATION and DRONE_AIRFRAME
 # SIMULATION is by default 0. However, it can be set to 1
 # DRONE_AIRFRAME is by default "t-drone". However, it can be set to "holybro"

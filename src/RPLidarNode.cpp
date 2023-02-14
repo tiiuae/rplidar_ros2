@@ -62,6 +62,19 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    m_filter_minimal_number_of_close_samples = this->declare_parameter("filter.minimal_number_of_close_samples", 8);
    m_filter_minimal_distance_for_acceptance_samples = this->declare_parameter("filter.minimal_distance_for_acceptance_samples", 0.1);
 
+   scan_count = &(prometheus::BuildCounter()
+      .Name("rplidar_scan_count")
+      .Help("Number of scan results received from the lidar")
+      .Register(*metrics_registry).Add({}));
+
+   auto metrics_port = getenv("METRICS_PORT");
+   if (metrics_port != nullptr) // start HTTP endpoint only if requested
+   {
+      metrics_exposer = std::make_shared<prometheus::Exposer>("0.0.0.0:" + std::string(metrics_port));
+
+      metrics_exposer->RegisterCollectable(metrics_registry);
+   }
+
    RCLCPP_INFO(logger, "RPLIDAR running on ROS 2 package rplidar_ros. SDK Version: '%s'", RPLIDAR_SDK_VERSION);
 
    /* initialize SDK */
@@ -132,6 +145,8 @@ RPLidarNode::~RPLidarNode()
 void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
 {
    sensor_msgs::msg::LaserScan scan_msg;
+
+   scan_count->Increment();
 
    /* NOTE(allenh1): time was passed in as a parameter before */
    scan_msg.header.stamp = this->now();
