@@ -45,6 +45,9 @@
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <std_srvs/srv/empty.hpp>
 #include <visibility.h>
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/registry.h>
 
 namespace {
 constexpr auto MAX_SAMPLE_COUNT = 360 * 8;
@@ -146,6 +149,10 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    float m_max_distance{8.0};
    float m_angle_min{degreesToRadians(0)};
    float m_angle_max{degreesToRadians(359)};
+
+    std::shared_ptr<prometheus::Registry> metrics_registry = std::make_shared<prometheus::Registry>();
+    std::shared_ptr<prometheus::Exposer> metrics_exposer;
+    prometheus::Counter* scan_count;
 };
 
 } // namespace rplidar_ros
