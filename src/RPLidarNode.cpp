@@ -131,13 +131,11 @@ RPLidarNode::~RPLidarNode()
 
 void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
 {
-   static size_t scan_count = 0;
    sensor_msgs::msg::LaserScan scan_msg;
 
    /* NOTE(allenh1): time was passed in as a parameter before */
    scan_msg.header.stamp = this->now();
    scan_msg.header.frame_id = m_frame_id;
-   scan_count++;
 
    bool reversed = (m_angle_max > m_angle_min);
    if (reversed) {
