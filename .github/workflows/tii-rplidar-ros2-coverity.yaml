@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - new_ros2
+  pull_request:
 
 jobs:
   coverity:
