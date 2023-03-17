@@ -1,4 +1,4 @@
-FROM ghcr.io/tiiuae/fog-ros-baseimage-builder:sha-b1c9665 AS builder
+FROM ghcr.io/tiiuae/fog-ros-baseimage-builder:v2.1.0 AS builder
 
 COPY . /main_ws/src/
 
@@ -10,7 +10,7 @@ RUN /packaging/build.sh
 #  ▲               runtime ──┐
 #  └── build                 ▼
 
-FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-b1c9665
+FROM ghcr.io/tiiuae/fog-ros-baseimage:v2.1.0
 
 HEALTHCHECK --interval=5s \
 	CMD fog-health check --metric=rplidar_scan_count --diff-gte=1.0 \
