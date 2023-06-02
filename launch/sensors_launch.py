@@ -28,10 +28,10 @@ def generate_launch_description():
     SIMULATION = os.getenv('SIMULATION')
     simulation_mode = (SIMULATION == "1")
 
-    # DRONE_AIRFRAME = <t-drone | holybro>
+    # DRONE_AIRFRAME = <t-drone | holybro | rover (same as holybro)>
     is_robot_holybro_type = False
     DRONE_AIRFRAME = os.getenv('DRONE_AIRFRAME')
-    if DRONE_AIRFRAME == "holybro":
+    if DRONE_AIRFRAME == "holybro" or DRONE_AIRFRAME == "rover":
         is_robot_holybro_type = True
     elif DRONE_AIRFRAME == "" or DRONE_AIRFRAME == "t-drone":
         is_robot_holybro_type = False
@@ -84,7 +84,7 @@ def generate_launch_description():
 
     # sensor tf launch
     ld.add_action(
-        LogInfo(msg='--- HOLYBRO TYPE CONFIGURATION ---', condition=IfCondition(PythonExpression([str(is_robot_holybro_type)]))),
+        LogInfo(msg='--- HOLYBRO/ROVER TYPE CONFIGURATION ---', condition=IfCondition(PythonExpression([str(is_robot_holybro_type)]))),
     ),
     ld.add_action(
         IncludeLaunchDescription(
