@@ -12,6 +12,12 @@ RUN /packaging/build_colcon.sh
 
 FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-72709dd
 
+RUN apt update \
+    && apt install -y --no-install-recommends \
+        prometheus-cpp \
+		tf2-ros \
+    && rm -rf /var/lib/apt/lists/*
+
 HEALTHCHECK --interval=5s \
 	CMD fog-health check --metric=rplidar_scan_count --diff-gte=1.0 \
 		--metrics-from=http://localhost:${METRICS_PORT}/metrics --only-if-nonempty=${METRICS_PORT}
