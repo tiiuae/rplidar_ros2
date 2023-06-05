@@ -1,30 +1,31 @@
-name: Build
 
 on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.rst'
+  pull_request:
   repository_dispatch:
     types: [fog-ros-baseimage-update]
-  push:
+  workflow_dispatch:
 
 jobs:
-  build:
+  main:
+    name: Build & push
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - uses: docker/setup-buildx-action@v2
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: amd64,riscv64
+          # Ignore arm64 for now becasue it takes too long to build.
+          # Enable it when we get more stable version.
+          # ,arm64
 
-      - name: Set image tag format without suffix
-        run: |
-          echo "IMAGE_TAG_FORMAT=type=sha" >> $GITHUB_ENV
-        if: github.event_name == 'push'
-
-      - name: Set image tag format with suffix
-        # it is possible that run_number should be used instead run_attempt
-        # run_attempt is unique number on every run and run_attempt resets to 1 if re-build is not used
-        # content of image_sha_tag_suffix is defined in fog-ros-baseimage dispatcher workflow.
-        run: |
-          echo "IMAGE_TAG_FORMAT=type=sha,suffix=-${{ github.event.client_payload.image_sha_tag_suffix }}" >> $GITHUB_ENV
-        if: github.event_name == 'repository_dispatch'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Docker meta
         id: meta
@@ -33,21 +34,27 @@ jobs:
           images: ghcr.io/tiiuae/tii-rplidar
           tags: |
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
-            type=raw,value=latest
-            ${{ env.IMAGE_TAG_FORMAT }}
+            type=sha
+            type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
+        if: github.event_name == 'push'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build container image and push
+      - name: Build image and push
         uses: docker/build-push-action@v4
         with:
           context: .
+          platforms: linux/amd64,linux/riscv64
+          # Ignore arm64 for now becasue it takes too long to build.
+          # Enable it when we get more stable version.
+          # ,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
