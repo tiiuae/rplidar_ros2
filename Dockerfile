@@ -1,16 +1,6 @@
-FROM ghcr.io/tiiuae/fog-ros-baseimage-builder:sha-72709dd AS builder
-
-# SRC_DIR environment variable is defined in the fog-ros-baseimage-builder.
-# The same workspace path is used by all ROS2 components.
-# See: https://github.com/tiiuae/fog-ros-baseimage/blob/main/Dockerfile.builder
-COPY . $SRC_DIR/rplidar_ros2
-
-RUN /packaging/build_colcon.sh
-
-#  ▲               runtime ──┐
-#  └── build                 ▼
-
 FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-72709dd
+
+ARG TARGETARCH
 
 RUN apt update \
     && apt install -y --no-install-recommends \
@@ -29,7 +19,13 @@ ENTRYPOINT [ "/entrypoint.sh" ]
 
 COPY entrypoint.sh /entrypoint.sh
 
-# INSTALL_DIR environment variable is defined in the fog-ros-baseimage.
+# The install-<TARGETARCH>.xz file contains the install directory. This file
+# has been generated during cross-compilation.
+# See Dockerfile.builder in this repo.
+COPY install-${TARGETARCH}.tar.gz install.tar.gz
+# WORKSPACE_DIR environment variable is defined in the fog-ros-baseimage.
 # The same installation directory is used by all ROS2 components.
 # See: https://github.com/tiiuae/fog-ros-baseimage/blob/main/Dockerfile
-COPY --from=builder $INSTALL_DIR  $INSTALL_DIR
+RUN md5sum install.tar.gz && \
+    mkdir -p $WORKSPACE_DIR && \
+    tar -xzf install.tar.gz --directory $WORKSPACE_DIR
