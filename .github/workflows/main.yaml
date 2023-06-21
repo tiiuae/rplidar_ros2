@@ -47,7 +47,6 @@ jobs:
           docker run --rm -d --name=tmp-container-${{ matrix.architecture }} -t rplidar-ros2:dev-${{ matrix.architecture }}
           docker cp tmp-container-${{ matrix.architecture }}:/main_ws/install.tar.gz install-${{ matrix.architecture }}.tar.gz
           docker stop tmp-container-${{ matrix.architecture }}
-          ls -lh ${{ github.workspace }}/install-${{ matrix.architecture }}.tar.gz 
 
       - name: Upload install-${{ matrix.architecture }}.tar.gz artifact
         uses: actions/upload-artifact@v3
@@ -89,6 +88,21 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download install-amd64.tar.gz artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: install-amd64
+
+      - name: Download install-arm64.tar.gz artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: install-arm64
+
+      - name: Download install-riscv64.tar.gz artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: install-riscv64
 
       - name: Build image and push
         uses: docker/build-push-action@v4
