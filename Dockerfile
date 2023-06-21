@@ -26,6 +26,5 @@ COPY install-${TARGETARCH}.tar.gz install.tar.gz
 # WORKSPACE_DIR environment variable is defined in the fog-ros-baseimage.
 # The same installation directory is used by all ROS2 components.
 # See: https://github.com/tiiuae/fog-ros-baseimage/blob/main/Dockerfile
-RUN md5sum install.tar.gz && \
-    mkdir -p $WORKSPACE_DIR && \
+RUN mkdir -p $WORKSPACE_DIR && \
     tar -xzf install.tar.gz --directory $WORKSPACE_DIR
