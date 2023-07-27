@@ -63,6 +63,7 @@ struct RplidarScanMode {
 enum {
     DRIVER_TYPE_SERIALPORT = 0x0,
     DRIVER_TYPE_TCP = 0x1,
+    DRIVER_TYPE_SIM = 0x2,
 };
 
 class ChannelDevice

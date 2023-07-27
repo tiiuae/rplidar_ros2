@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.9.5)
 project(rplidar_ros2)
 
+option(RPLIDAR_BUILD_HITL_SUPPORT "Build HITL simulation support." ON)
+
 if (NOT CMAKE_C_STANDARD)
     set(CMAKE_C_STANDARD 99)
 endif ()
@@ -22,6 +24,23 @@ add_library(rplidar_sdk SHARED
         sdk/src/arch/linux/timer.cpp
 
         sdk/src/hal/thread.cpp)
+
+list(APPEND sim_dep)
+
+if (RPLIDAR_BUILD_HITL_SUPPORT)
+    message(STATUS "Build HITL support")
+    #target_sources(rplidar_sdk PRIVATE sdk/src/rplidar_driver.cpp)
+    add_definitions(-DHITL_SUPPORT)
+    find_package(Protobuf REQUIRED)
+    find_package(gz-cmake3 REQUIRED)
+    find_package(gz-math7 REQUIRED)
+    find_package(gz-transport12 REQUIRED)
+    find_package(gz-msgs9 REQUIRED)
+    set(Protobuf_IMPORT_DIRS ${gz-msgs9_INCLUDE_DIRS})
+    target_link_libraries(rplidar_sdk
+        PRIVATE gz-msgs9::gz-msgs9 gz-math7::gz-math7 gz-transport12::gz-transport12
+    )
+endif ()
 
 target_include_directories(rplidar_sdk
         PUBLIC

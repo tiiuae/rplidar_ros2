@@ -23,6 +23,8 @@ def generate_launch_description():
 
     # Environment variables
     DRONE_DEVICE_ID = os.getenv('DRONE_DEVICE_ID')
+    HITL_WORLD_ID = os.getenv('HITL_WORLD_ID')
+    hitl_world_id_expr = (HITL_WORLD_ID != "")
 
     # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
     SIMULATION = os.getenv('SIMULATION')
@@ -57,6 +59,20 @@ def generate_launch_description():
     rplidar_frame = DRONE_DEVICE_ID + "/rplidar" # the same definition is in static_tf_launch.py file
     garmin_frame = DRONE_DEVICE_ID + "/garmin"   # the same definition is in static_tf_launch.py file
 
+    params=[
+        pkg_share_path + '/config/params.yaml',
+                {"frame_id": rplidar_frame},
+    ]
+
+    if HITL_WORLD_ID is not None:
+        params.append({"sim_world_model": HITL_WORLD_ID + '/' + DRONE_DEVICE_ID})
+        params.append({"channel_type": 'sim'})
+        params.append({"scan_mode": ''})
+
+    ld.add_action(
+        LogInfo(msg='--- HITL CONFIGURATION ---', condition=IfCondition(PythonExpression([str(hitl_world_id_expr)]))),
+    ),
+
     # simulation
     ld.add_action(
         LogInfo(msg='--- SIMULATION CONFIGURATION ---', condition=IfCondition(PythonExpression([str(simulation_mode)]))),
@@ -73,10 +89,7 @@ def generate_launch_description():
                 ('topic_filtered_out', filtered_name),
                 ('topic_raw_out', raw_name),
             ],
-            parameters = [
-                pkg_share_path + '/config/params.yaml',
-                {"frame_id": rplidar_frame},
-            ],
+            parameters=params,
             output = 'screen',
         ),
     ),

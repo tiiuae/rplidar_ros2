@@ -47,6 +47,7 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    m_channel_type = this->declare_parameter("channel_type", "serial");
    m_tcp_ip = this->declare_parameter("tcp_ip", "192.168.0.7");
    m_tcp_port = this->declare_parameter("tcp_port", 20108);
+   m_sim_world_model = this->declare_parameter("sim_world_model", "");
    m_serial_port = this->declare_parameter("serial_port", "/dev/ttyUSB0");
    m_serial_baudrate = this->declare_parameter("serial_baudrate", 115200);
    m_frame_id = this->declare_parameter("frame_id", std::string("laser_frame"));
@@ -80,6 +81,9 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
    /* initialize SDK */
    if (m_channel_type == "tcp") {
       m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_TCP));
+   } else if (m_channel_type == "sim") {
+      RCLCPP_INFO(logger, "Starting SIM driver..");
+      m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SIM));
    } else {
       m_driver = RPLidarDriverUPtr(RPLidarDriver::CreateDriver(rp::standalone::rplidar::DRIVER_TYPE_SERIALPORT));
    }
@@ -97,7 +101,13 @@ RPLidarNode::RPLidarNode(const rclcpp::NodeOptions& options) : rclcpp::Node("rpl
          error_string << "Cannot bind to the specified TCP host: " << m_tcp_ip << ":" << m_tcp_port;
          throw std::runtime_error(error_string.str());
       }
-
+   } else if (m_channel_type == "sim") {
+      // make connection...
+      if (IS_FAIL(m_driver->connect(m_sim_world_model.c_str(), 0))) {
+         std::stringstream error_string;
+         error_string << "Cannot connect to simulation - world/model: " << m_sim_world_model;
+         throw std::runtime_error(error_string.str());
+      }
    } else {
       // make connection...
       if (IS_FAIL(m_driver->connect(m_serial_port.c_str(), (_u32)m_serial_baudrate))) {
@@ -144,6 +154,7 @@ RPLidarNode::~RPLidarNode()
 
 void RPLidarNode::publish_scan(const double scan_time, const ResponseNodeArray& nodes, size_t node_count)
 {
+   const auto& logger = this->get_logger();
    sensor_msgs::msg::LaserScan scan_msg;
 
    scan_count->Increment();

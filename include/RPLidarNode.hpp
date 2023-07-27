@@ -110,6 +110,7 @@ class RPLIDAR_ROS_PUBLIC RPLidarNode : public rclcpp::Node
    std::string m_channel_type;
    std::string m_tcp_ip;
    std::string m_serial_port;
+   std::string m_sim_world_model;
    std::string m_scan_topic;
    int m_tcp_port;
    int m_serial_baudrate;

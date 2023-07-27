@@ -44,6 +44,11 @@
 #include "rplidar_driver_impl.h"
 #include "rplidar_driver_serial.h"
 #include "rplidar_driver_TCP.h"
+#ifdef HITL_SUPPORT
+  #include "rplidar_driver_sim.h"
+  #include <gz/math.hh>
+  #include <gz/msgs/laserscan.pb.h>
+#endif
 
 #include <algorithm>
 
@@ -89,6 +94,10 @@ RPlidarDriver * RPlidarDriver::CreateDriver(_u32 drivertype)
         return new RPlidarDriverSerial();
     case DRIVER_TYPE_TCP:
          return new RPlidarDriverTCP();
+#ifdef HITL_SUPPORT
+    case DRIVER_TYPE_SIM:
+        return new RPlidarDriverSim();
+#endif
     default:
         return NULL;
     }
@@ -2259,5 +2268,139 @@ u_result RPlidarDriverTCP::connect(const char * ipStr, _u32 port, _u32)
 
     return RESULT_OK;
 }
+
+/* HITL SIM DRIVER */
+
+#ifdef HITL_SUPPORT
+
+RPlidarDriverSim::RPlidarDriverSim()
+    : _scanReady{false}
+{
+}
+
+RPlidarDriverSim::~RPlidarDriverSim()
+{
+    _isConnected = false;
+}
+
+u_result RPlidarDriverSim::connect(const char * worldSlashModel, _u32, _u32)
+{
+    if (_isConnected) return RESULT_ALREADY_DONE;
+
+	std::stringstream wsm(worldSlashModel);
+	std::string word;
+	std::vector<std::string> wm_list;
+	while ( std::getline(wsm, word, '/'))
+	{
+		wm_list.push_back(word);
+	}
+	if (wm_list.size() < 2) {
+		return RESULT_INVALID_DATA;
+	}
+
+	_worldName = wm_list[0];
+	_modelName = wm_list[1];
+
+	std::string scan_topic = "/world/" + _worldName + "/model/" + _modelName + "/link/2d_scanner_link/sensor/rplidar/scan";
+
+	if (!_node.Subscribe(scan_topic, &RPlidarDriverSim::_scanCallback, this)) {
+		fprintf(stderr, "[RPlidarDriverSim::connect] - ERROR: failed to subscribe to %s", scan_topic.c_str());
+		return RESULT_INVALID_DATA;
+	}
+
+    _isConnected = true;
+
+    return RESULT_OK;
+}
+
+void RPlidarDriverSim::_scanCallback(const gz::msgs::LaserScan &scan)
+{
+	// Store scan results
+	rp::hal::AutoLocker l(_lock);
+	_scanInput = scan;
+    _scanReady = true;
+}
+
+/* Override default implementations for HITL */
+u_result RPlidarDriverSim::reset(_u32) {return RESULT_OK;}
+u_result RPlidarDriverSim::clearNetSerialRxCache() {return RESULT_OK;}
+u_result RPlidarDriverSim::getAllSupportedScanModes(std::vector<RplidarScanMode>&, _u32) {return RESULT_OPERATION_NOT_SUPPORT;}
+u_result RPlidarDriverSim::getTypicalScanMode(_u16&, _u32) {return RESULT_OPERATION_NOT_SUPPORT;}
+u_result RPlidarDriverSim::startScanExpress(bool, _u16, _u32, RplidarScanMode*, _u32) {return RESULT_OK;}
+u_result RPlidarDriverSim::setMotorPWM(_u16) {return RESULT_OK;}
+u_result RPlidarDriverSim::startMotor() {return RESULT_OK;}
+u_result RPlidarDriverSim::stopMotor() {return RESULT_OK;}
+u_result RPlidarDriverSim::checkMotorCtrlSupport(bool & support, _u32) {support=false; return RESULT_OK;}
+u_result RPlidarDriverSim::getFrequency(const RplidarScanMode&, size_t, float &) {return RESULT_OPERATION_NOT_SUPPORT;}
+u_result RPlidarDriverSim::startScanNormal(bool, _u32) {return RESULT_OK;}
+u_result RPlidarDriverSim::stop(_u32) {return RESULT_OK;}
+
+u_result RPlidarDriverSim::getHealth(rplidar_response_device_health_t & healthinfo, _u32)
+{
+    healthinfo.status = RPLIDAR_STATUS_OK;
+    healthinfo.error_code = 0;
+    return RESULT_OK;
+}
+
+u_result RPlidarDriverSim::getDeviceInfo(rplidar_response_device_info_t & info, _u32)
+{
+    info.model = 1;
+    info.firmware_version = 0x0100;
+    info.hardware_version = 0x01;
+    for (int i=0; i<16; i++) info.serialnum[i] = 0;
+    info.serialnum[0] = 0x0c;
+    info.serialnum[1] = 0x0a;
+    info.serialnum[2] = 0x0f;
+    info.serialnum[3] = 0x0f;
+    info.serialnum[4] = 0x0e;
+    info.serialnum[5] = 0x0e;
+    return RESULT_OK;
+}
+
+u_result RPlidarDriverSim::startScan(bool, bool, _u32, RplidarScanMode* outUsedScanMode)
+{
+    outUsedScanMode->id = RPLIDAR_CONF_SCAN_COMMAND_STD;
+    outUsedScanMode->us_per_sample = 7200.0f / 1e6;
+    outUsedScanMode->max_distance = 14.0f;
+    outUsedScanMode->ans_type = RPLIDAR_ANS_TYPE_MEASUREMENT;
+    strcpy(outUsedScanMode->scan_mode, "Standard");
+
+    return RESULT_OK;
+}
+
+u_result RPlidarDriverSim::grabScanDataHq(rplidar_response_measurement_node_hq_t *, size_t & count, _u32 timeout_ms)
+{
+    uint32_t time_count_us = 0;
+    while (!_scanReady) {
+        usleep(100);
+        time_count_us += 100;
+        if (timeout_ms < time_count_us / 1000) {
+            return RESULT_OPERATION_TIMEOUT;
+        }
+    }
+    rp::hal::AutoLocker l(_lock);
+    _scanReady = false;
+    _scanOutput = _scanInput;
+    count = _scanInput.count();
+    return RESULT_OK;
+}
+u_result RPlidarDriverSim::ascendScanData(rplidar_response_measurement_node_hq_t * nodebuffer, size_t count)
+{
+    for (size_t i = 0; i < count; i++) {
+        auto scan_idx = count-1 - i;
+        if ( isinf(_scanOutput.ranges(scan_idx)) ) {
+            nodebuffer[i].dist_mm_q2 = 0;
+        } else {
+            nodebuffer[i].dist_mm_q2 = (uint32_t) (_scanOutput.ranges(scan_idx) * 4000.0f);
+        }
+        nodebuffer[i].quality = ((uint8_t) _scanOutput.intensities(scan_idx)) << 2;
+        //std::cout << "nodebuf: " << i << ": " << nodebuffer[i].dist_mm_q2 << "\n";
+    }
+   return RESULT_OK;
+}
+
+u_result RPlidarDriverSim::getScanDataWithIntervalHq(rplidar_response_measurement_node_hq_t *, size_t &) {return RESULT_OK;}
+
+#endif /* HITL_SUPPORT */
 
 }}}
