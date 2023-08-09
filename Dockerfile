@@ -16,14 +16,6 @@ RUN /packaging/build_colcon_sdk.sh ${TARGETARCH:-amd64}
 
 FROM ghcr.io/tiiuae/fog-ros-baseimage:sha-71b9710
 
-ARG TARGETARCH
-
-RUN apt update \
-    && apt install -y --no-install-recommends \
-        prometheus-cpp \
-		tf2-ros \
-    && rm -rf /var/lib/apt/lists/*
-
 HEALTHCHECK --interval=5s \
 	CMD fog-health check --metric=rplidar_scan_count --diff-gte=1.0 \
 		--metrics-from=http://localhost:${METRICS_PORT}/metrics --only-if-nonempty=${METRICS_PORT}
@@ -39,4 +31,5 @@ COPY entrypoint.sh /entrypoint.sh
 # The same installation directory is used by all ROS2 components.
 # See: https://github.com/tiiuae/fog-ros-baseimage/blob/main/Dockerfile
 WORKDIR $WORKSPACE_DIR
+
 COPY --from=builder $WORKSPACE_DIR/install install
