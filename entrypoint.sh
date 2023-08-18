@@ -4,7 +4,7 @@ _term() {
 	# FILL UP PROCESS SEARCH PATTERN HERE TO FIND PROPER PROCESS FOR SIGINT:
 	pattern="fcu_to_garmin_static_transform_publisher"
 
-	pid_value="$(ps -ax | grep $pattern | grep -v grep | awk '{ print $1 }')"
+	pid_value="$(ps -a | grep $pattern | grep -v grep | awk '{ print $1 }')"
 	if [ "$pid_value" != "" ]; then
 		pid=$pid_value
 		echo "Send SIGINT to pid $pid"
@@ -16,7 +16,7 @@ _term() {
 
 	pattern="fcu_to_rplidar_static_transform_publisher"
 
-	pid_value="$(ps -ax | grep $pattern | grep -v grep | awk '{ print $1 }')"
+	pid_value="$(ps -a | grep $pattern | grep -v grep | awk '{ print $1 }')"
 	if [ "$pid_value" != "" ]; then
 		pid=$pid_value
 		echo "Send SIGINT to pid $pid"
@@ -28,7 +28,7 @@ _term() {
 
 	pattern="rplidar_ros2/rplidar"
 
-	pid_value="$(ps -ax | grep $pattern | grep -v grep | awk '{ print $1 }')"
+	pid_value="$(ps -a | grep $pattern | grep -v grep | awk '{ print $1 }')"
 	if [ "$pid_value" != "" ]; then
 		pid=$pid_value
 		echo "Send SIGINT to pid $pid"
