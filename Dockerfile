@@ -1,8 +1,10 @@
 # Given dynamically from CI job.
-FROM --platform=${BUILDPLATFORM:-linux/amd64} ghcr.io/tiiuae/fog-ros-sdk:sha-b1c429f-${TARGETARCH:-amd64} AS builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} ghcr.io/tiiuae/fog-ros-sdk:sha-9d7fd43-${TARGETARCH:-amd64} AS builder
 
 # Must be defined another time after "FROM" keyword.
 ARG TARGETARCH
+
+ARG HITL_SUPPORT="OFF"
 
 # SRC_DIR environment variable is defined in the fog-ros-sdk image.
 # The same workspace path is used by all ROS2 components.
@@ -10,7 +12,7 @@ ARG TARGETARCH
 COPY . $SRC_DIR/rplidar_ros2
 
 # Tar directories so they are easier to handle when doing installation.
-RUN /packaging/build_colcon_sdk.sh ${TARGETARCH:-amd64}
+RUN /packaging/build_colcon_sdk.sh ${TARGETARCH:-amd64} "-DRPLIDAR_BUILD_HITL_SUPPORT=${HITL_SUPPORT}"
 # Even though it is possible to tar the install directory for retrieving it later in runtime image,
 # the tar extraction in arm64 emulated on arm64 is still slow. So, we copy the install directory instead
 

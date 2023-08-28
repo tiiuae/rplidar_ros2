@@ -33,9 +33,9 @@ if (RPLIDAR_BUILD_HITL_SUPPORT)
     add_definitions(-DHITL_SUPPORT)
     find_package(Protobuf REQUIRED)
     find_package(gz-cmake3 REQUIRED)
-    find_package(gz-math7 REQUIRED)
-    find_package(gz-transport12 REQUIRED)
-    find_package(gz-msgs9 REQUIRED)
+    gz_find_package(gz-math7 REQUIRED)
+    gz_find_package(gz-transport12 REQUIRED)
+    gz_find_package(gz-msgs9 REQUIRED)
     set(Protobuf_IMPORT_DIRS ${gz-msgs9_INCLUDE_DIRS})
     target_link_libraries(rplidar_sdk
         PRIVATE gz-msgs9::gz-msgs9 gz-math7::gz-math7 gz-transport12::gz-transport12
