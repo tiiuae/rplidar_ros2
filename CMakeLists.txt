@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9.5)
 project(rplidar_ros2)
 
-option(RPLIDAR_BUILD_HITL_SUPPORT "Build HITL simulation support." ON)
+option(RPLIDAR_BUILD_HITL_SUPPORT "Build HITL simulation support." OFF)
 
 if (NOT CMAKE_C_STANDARD)
     set(CMAKE_C_STANDARD 99)
