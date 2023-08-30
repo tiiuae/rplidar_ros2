@@ -40,6 +40,18 @@ jobs:
             type=sha
             type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
 
+      - name: Docker meta
+        id: meta_hitl
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/tiiuae/tii-rplidar-hitl
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+            type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         if: github.event_name == 'push'
@@ -56,3 +68,14 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build image and push HITL image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/riscv64,linux/arm64
+          push: true
+          tags: ${{ steps.meta_hitl.outputs.tags }}
+          labels: ${{ steps.meta_hitl.outputs.labels }}
+          build-args: |
+            HITL_SUPPORT=ON

@@ -1,5 +1,5 @@
 # Given dynamically from CI job.
-FROM --platform=${BUILDPLATFORM:-linux/amd64} ghcr.io/tiiuae/fog-ros-sdk:sha-9d7fd43-${TARGETARCH:-amd64} AS builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} ghcr.io/tiiuae/fog-ros-sdk:sha-fca3351-${TARGETARCH:-amd64} AS builder
 
 # Must be defined another time after "FROM" keyword.
 ARG TARGETARCH
@@ -27,10 +27,11 @@ HEALTHCHECK --interval=5s \
 # DRONE_AIRFRAME is by default "t-drone". However, it can be set to "holybro"
 ENTRYPOINT [ "/entrypoint.sh" ]
 
-RUN apt update \
+RUN [ "${HITL_SUPPORT}" = "ON" ] \
+    && apt update \
     && apt install -y --no-install-recommends \
-		gz-transport12 \
-    && rm -rf /var/lib/apt/lists/*
+       gz-transport12 \
+    && rm -rf /var/lib/apt/lists/* || :
 
 COPY entrypoint.sh /entrypoint.sh
 
