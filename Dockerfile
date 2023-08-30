@@ -1,5 +1,5 @@
 # Given dynamically from CI job.
-FROM --platform=${BUILDPLATFORM:-linux/amd64} ghcr.io/tiiuae/fog-ros-sdk:sha-f8defd3-${TARGETARCH:-amd64} AS builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} ghcr.io/tiiuae/fog-ros-sdk:sha-a7b9d07-${TARGETARCH:-amd64} AS builder
 
 # Must be defined another time after "FROM" keyword.
 ARG TARGETARCH
