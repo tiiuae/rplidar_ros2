@@ -41,6 +41,7 @@ _term() {
 # Use SIGTERM or TERM, does not seem to make any difference.
 trap _term SIGTERM
 
+source /usr/share/rplidar_ros2/local_setup.bash
 ros-with-env ros2 launch rplidar_ros2 sensors_launch.py &
 child=$!
 
