@@ -26,7 +26,7 @@ def generate_launch_description():
     HITL_WORLD_ID = os.getenv('HITL_WORLD_ID')
     hitl_world_id_expr = (HITL_WORLD_ID != "")
 
-    # If the SIMULATION environment variable is set to 1, then only static tf publisher will start.
+    # If the SIMULATION environment variable is set to 1, the rplidar driver is gz-sim.
     SIMULATION = os.getenv('SIMULATION')
     simulation_mode = (SIMULATION == "1")
 
@@ -41,7 +41,7 @@ def generate_launch_description():
         print('ERROR: not valid DRONE_AIRFRAME.')
         sys.exit(1)
 
-    # By default use raw scan, only if USE_FILTERED_SCAN is set to 1 or True, use filtered 
+    # By default use raw scan, only if USE_FILTERED_SCAN is set to 1 or True, use filtered
     filtered_name = "~/scan_filtered"
     raw_name = "~/scan"
 
@@ -68,6 +68,7 @@ def generate_launch_description():
         params.append({"sim_world_model": HITL_WORLD_ID + '/' + DRONE_DEVICE_ID})
         params.append({"channel_type": 'sim'})
         params.append({"scan_mode": ''})
+        params.append({"use_sim_time": simulation_mode})
 
     ld.add_action(
         LogInfo(msg='--- HITL CONFIGURATION ---', condition=IfCondition(PythonExpression([str(hitl_world_id_expr)]))),
@@ -83,7 +84,6 @@ def generate_launch_description():
             namespace = namespace,
             package = pkg_name,
             executable = 'rplidar',
-            condition=IfCondition(PythonExpression(['not ', str(simulation_mode)])),
             name = 'rplidar',
             remappings=[
                 ('topic_filtered_out', filtered_name),

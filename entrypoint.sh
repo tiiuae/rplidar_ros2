@@ -42,6 +42,13 @@ _term() {
 trap _term SIGTERM
 
 source /usr/share/rplidar_ros2/local_setup.bash
+
+if [ -n "${HITL_WORLD_ID}" ]; then
+	export GZ_VERSION=garden
+	export GZ_PARTITION=${GZ_PARTITION:-sim}
+	export GZ_IP=${GZ_IP:-127.0.0.1}
+fi
+
 ros-with-env ros2 launch rplidar_ros2 sensors_launch.py &
 child=$!
 
