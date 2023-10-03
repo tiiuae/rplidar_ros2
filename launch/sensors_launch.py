@@ -78,6 +78,7 @@ def generate_launch_description():
                 {"frame_id": rplidar_frame},
             ],
             output = 'screen',
+            respawn = True,
         ),
     ),
 
