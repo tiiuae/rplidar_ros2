@@ -5,6 +5,16 @@
 
 version: 2
 updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      baseimage-dependencies:
+          patterns:
+            - "tiiuae/fog-ros-sdk"
+            - "tiiuae/fog-ros-baseimage-builder"
+            - "tiiuae/fog-ros-baseimage"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
