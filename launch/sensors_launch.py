@@ -29,8 +29,8 @@ def generate_launch_description():
     SIMULATION = os.getenv('SIMULATION')
     simulation_mode = (SIMULATION == "1")
 
-    # DRONE_AIRFRAME = <holybro | rover (same as holybro) | m690 | m1200>
-    allowed_airframes = ["holybro", "rover", "m690", "m1200"]
+    # DRONE_AIRFRAME = <holybro | rover (same as holybro) | t-drone(m690) | m1200>
+    allowed_airframes = ["holybro", "rover", "t-drone", "m1200"]
     DRONE_AIRFRAME = os.getenv('DRONE_AIRFRAME')
     if DRONE_AIRFRAME not in allowed_airframes:
         print('ERROR: not valid DRONE_AIRFRAME.')
