@@ -35,6 +35,8 @@
 #pragma once 
 
 #include "hal/types.h"
+// NOTE: Neccessary for fuzzing harness
+#include <cstddef>
 
 namespace rp{ namespace hal{
 
