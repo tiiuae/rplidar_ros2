@@ -6,6 +6,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch.substitutions import ThisLaunchFileDir
 from launch.conditions import IfCondition
+from launch.conditions import LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
@@ -28,17 +29,21 @@ def generate_launch_description():
     SIMULATION = os.getenv('SIMULATION')
     simulation_mode = (SIMULATION == "1")
 
-    # DRONE_AIRFRAME = <t-drone | holybro | rover (same as holybro)>
-    is_robot_holybro_type = False
+    # DRONE_AIRFRAME = <holybro | rover (same as holybro) | t-drone(m690) | m1200>
+    allowed_airframes = ["holybro", "rover", "t-drone", "m1200"]
     DRONE_AIRFRAME = os.getenv('DRONE_AIRFRAME')
-    if DRONE_AIRFRAME == "holybro" or DRONE_AIRFRAME == "rover":
-        is_robot_holybro_type = True
-    elif DRONE_AIRFRAME == "" or DRONE_AIRFRAME == "t-drone":
-        is_robot_holybro_type = False
-    else:
+    if DRONE_AIRFRAME not in allowed_airframes:
         print('ERROR: not valid DRONE_AIRFRAME.')
         sys.exit(1)
 
+    # By default use file with name convention '/static_tf_<airframe>_launch.py'
+    file = "/static_tf_" + DRONE_AIRFRAME + "_launch.py"
+    info_string= "--- " + DRONE_AIRFRAME.upper() + " TYPE CONFIGURATION ---"
+
+    # exception - rover uses holybro configuration 
+    if DRONE_AIRFRAME == "rover":
+        file = '/static_tf_holybro_launch.py'
+        
     # By default use raw scan, only if USE_FILTERED_SCAN is set to 1 or True, use filtered 
     filtered_name = "~/scan_filtered"
     raw_name = "~/scan"
@@ -82,26 +87,12 @@ def generate_launch_description():
         ),
     ),
 
-
-    # sensor tf launch
     ld.add_action(
-        LogInfo(msg='--- HOLYBRO/ROVER TYPE CONFIGURATION ---', condition=IfCondition(PythonExpression([str(is_robot_holybro_type)]))),
+        LogInfo(msg=info_string)
     ),
     ld.add_action(
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/static_tf_holybro_launch.py']),
-            condition=IfCondition(PythonExpression([str(is_robot_holybro_type)])),
+            PythonLaunchDescriptionSource([ThisLaunchFileDir(), file])
         ),
-    ),
-
-    ld.add_action(
-        LogInfo(msg='--- T-DRONE TYPE CONFIGURATION ---', condition=IfCondition(PythonExpression(['not ', str(is_robot_holybro_type)]))),
-    ),
-    ld.add_action(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([ThisLaunchFileDir(), '/static_tf_tdrone_launch.py']),
-            condition=IfCondition(PythonExpression(['not ', str(is_robot_holybro_type)])),
-        ),
-    ),
-
+    )
     return ld
