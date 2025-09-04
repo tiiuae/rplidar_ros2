@@ -33,6 +33,14 @@
  */
 
 #pragma once
+// NOTE: Necessary for fuzzing harness
+#include <cassert>
+#include <cerrno>
+#include <cstddef>
+#include <ctime>
+#include <pthread.h>
+#include <sys/select.h>
+#include <sys/time.h>
 namespace rp{ namespace hal{
 
 class Event
